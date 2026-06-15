@@ -1,0 +1,12 @@
+# Bloquear el acceso a archivos de scripts, base de datos y logs
+<FilesMatch "\.(sh|ps1|sql|log|md|txt|ini)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Bloquear el acceso a la carpeta de configuración y a la de Git
+RedirectMatch 404 ^/tfg/config/.*$
+RedirectMatch 404 /\.git
+
+php_value upload_max_filesize 20M
+php_value post_max_size 25M
