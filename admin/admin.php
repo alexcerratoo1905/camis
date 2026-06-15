@@ -38,6 +38,68 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/public/css/style.css">
+    <style>
+        #drop-zone {
+            border: 2px dashed #343a40;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        #drop-zone:hover, #drop-zone.dragover {
+            background-color: #e9ecef;
+            border-color: #0dcaf0;
+        }
+        .preview-img-container {
+            position: relative;
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .preview-img-container img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .crm-thumb-container {
+            position: relative;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .crm-thumb {
+            width: 55px;
+            height: 55px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background-color: #fff;
+        }
+        .btn-borrar-foto {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            text-decoration: none;
+        }
+        .btn-borrar-foto:hover {
+            background: #bd2130;
+            color: white;
+        }
+    </style>
 </head>
 
 <body class="admin-body">
@@ -127,11 +189,13 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                     $msgTexto = "";
                     switch($_GET['mensaje']) {
                         case 'prenda_subida': $msgTexto = "¡La camiseta y sus fotos se han publicado correctamente!"; break;
-                        case 'inventario_actualizado': $msgTexto = "¡Los precios y descuentos se han guardado con éxito!"; break;
+                        case 'inventario_actualizado': $msgTexto = "¡Los cambios en los productos se han guardado con éxito!"; break;
                         case 'estado_actualizado': $msgTexto = "¡El estado del pedido se ha actualizado!"; break;
                         case 'tracking_enviado': $msgTexto = "¡Correo de seguimiento enviado al cliente!"; break;
                         case 'coleccion_creada': $msgTexto = "¡La nueva categoría se ha creado correctamente!"; break;
                         case 'coleccion_actualizada': $msgTexto = "¡Categoría guardada!"; break;
+                        case 'foto_eliminada': $msgTexto = "¡La imagen seleccionada ha sido borrada permanentemente!"; break;
+                        case 'fotos_anadidas': $msgTexto = "¡Nuevas fotos añadidas a la galería del producto!"; break;
                     }
                     if ($msgTexto != "") {
                         echo '<div class="alert alert-success alert-dismissible fade show animate__animated animate__fadeIn" role="alert">
@@ -147,6 +211,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                           </div>';
                 }
                 ?>
+
                 <div class="row">
                     <div class="col-12">
                         <?php
@@ -252,12 +317,9 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                             case 'productos':
                                 $prod = new Producto($db->conectar());
 
-                                // Variables de Paginación
                                 $productosPorPagina = 5;
                                 $paginaActual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
-                                if ($paginaActual < 1) {
-                                    $paginaActual = 1;
-                                }
+                                if ($paginaActual < 1) $paginaActual = 1;
 
                                 $totalProductos = $prod->contarProductosPorTipo(false);
                                 $totalPaginas = ceil($totalProductos / $productosPorPagina);
@@ -296,7 +358,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                     <div class="card card-body admin-card border-0 shadow-sm bg-light">
                                         <h5 class="fw-bold mb-3 text-uppercase"><i class="bi bi-box-seam me-2"></i>Añadir Nueva Camiseta al Catálogo</h5>
                                         
-                                        <form action="../controllers/adminController.php" method="POST" enctype="multipart/form-data" class="row g-3">
+                                        <form action="../controllers/adminController.php" method="POST" enctype="multipart/form-data" class="row g-3" id="formularioSubida">
                                             <input type="hidden" name="accion" value="crearPrendaTienda">
 
                                             <div class="col-md-4">
@@ -305,7 +367,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                             </div>
                                             <div class="col-6 col-md-2">
                                                 <label class="fw-bold small">Precio Base (€):</label>
-                                                <input type="number" step="0.01" name="precio" class="form-control border-dark" value="17.00" required>
+                                                <input type="number" step="0.01" name="precio" class="form-control border-dark" value="19.00" required>
                                             </div>
                                             <div class="col-6 col-md-3">
                                                 <label class="fw-bold small">Equipación:</label>
@@ -328,11 +390,18 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                 <label class="fw-bold small">Descripción (Opcional):</label>
                                                 <textarea name="descripcion" class="form-control border-dark" rows="1"></textarea>
                                             </div>
-                                            <div class="col-md-12 mt-2">
-                                                <label class="fw-bold small">Subir Fotos de la Camiseta (Puedes seleccionar varias a la vez):</label>
-                                                <input type="file" name="imagenes[]" class="form-control border-dark" accept="image/*" multiple required>
-                                                <small class="text-muted">La primera foto que selecciones será la principal.</small>
+
+                                            <div class="col-md-12 mt-3">
+                                                <label class="fw-bold small mb-2"><i class="bi bi-images me-1"></i> Fotos de la Camiseta:</label>
+                                                <div id="drop-zone" class="p-5 text-center text-muted">
+                                                    <i class="bi bi-cloud-arrow-up display-4"></i>
+                                                    <h5 class="mt-2">Haz Clic, Arrastra o pega (Ctrl+V) tus fotos aquí</h5>
+                                                    <p class="small mb-0">Puedes ir a Yupoo, hacer "Copiar Imagen" y darle a Ctrl+V directamente en esta ventana.</p>
+                                                </div>
+                                                <div id="preview-container" class="mt-3"></div>
+                                                <input type="file" name="imagenes[]" id="file-input" class="d-none" accept="image/*" multiple required>
                                             </div>
+
                                             <div class="col-12 text-end mt-4">
                                                 <button type="submit" class="btn btn-admin-black px-5 py-3 shadow-lg fw-bold w-100 w-md-auto"><i class="bi bi-cloud-arrow-up me-2"></i> PUBLICAR CAMISETA</button>
                                             </div>
@@ -349,14 +418,42 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                     <?php } else { ?>
                                         <?php foreach ($productosAgrupados as $id => $datos) { 
                                             if ($datos['es_segunda_mano'] == 1) continue;
+
+                                            // CONSULTA DE SEGURIDAD PARA SACAR LAS FOTOS DIRECTAMENTE DE LA BD
+                                            $stmtFotos = $conexion->prepare("SELECT id, url_imagen FROM imagenes_productos WHERE producto_id = ?");
+                                            $stmtFotos->execute([$id]);
+                                            $fotosProducto = $stmtFotos->fetchAll(PDO::FETCH_ASSOC);
+
+                                            // CONSULTA DE SEGURIDAD PARA TRAER LA DESCRIPCIÓN EXACTA DE LA BD
+                                            $stmtDesc = $conexion->prepare("SELECT descripcion FROM productos WHERE id = ?");
+                                            $stmtDesc->execute([$id]);
+                                            $descReal = $stmtDesc->fetchColumn();
                                         ?>
                                             <div class="card mb-4 border-0 shadow-sm admin-card" style="border-left: 6px solid #0dcaf0;">
                                                 <div class="card-header bg-dark text-white py-3">
                                                     <div class="row align-items-center g-3">
-                                                        <div class="col-12 col-lg-4">
-                                                            <span class="text-secondary fw-bold">#<?php echo $id; ?></span>
-                                                            <h5 class="d-inline m-0 fw-bold text-uppercase fs-6 ms-2"><?php echo $datos['nombre']; ?></h5>
+                                                        <div class="col-12 col-lg-3">
+                                                            <div class="d-flex align-items-center gap-1">
+                                                                <span class="text-secondary fw-bold small">#<?php echo $id; ?></span>
+                                                                <input type="text" name="nombre[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($datos['nombre']); ?>" class="form-control form-control-sm border-0 bg-secondary text-white fw-bold text-uppercase w-100" style="letter-spacing: 0.5px;" required>
+                                                            </div>
+                                                            
+                                                            <div class="mt-2 d-flex align-items-center flex-wrap gap-1">
+                                                                <?php foreach ($fotosProducto as $ft) { 
+                                                                    if(empty($ft['url_imagen'])) continue;
+                                                                ?>
+                                                                    <div class="crm-thumb-container">
+                                                                        <img src="../<?php echo htmlspecialchars($ft['url_imagen']); ?>" class="crm-thumb" alt="Foto">
+                                                                        <a href="../controllers/adminController.php?accion=borrarFotoEspecifica&id_foto=<?php echo $ft['id']; ?>&p_id=<?php echo $id; ?>&pag=<?php echo $paginaActual; ?>" class="btn-borrar-foto" onclick="return confirm('¿Seguro que quieres eliminar esta imagen del catálogo?');">×</a>
+                                                                    </div>
+                                                                <?php } ?>
+                                                                
+                                                                <button type="button" class="btn btn-sm btn-outline-info text-white border-secondary px-2 py-1 small" onclick="document.getElementById('add-foto-input-<?php echo $id; ?>').click();" title="Añadir más fotos a este producto">
+                                                                    <i class="bi bi-plus-lg"></i>
+                                                                </button>
+                                                            </div>
                                                         </div>
+                                                        
                                                         <div class="col-6 col-md-3 col-lg-2">
                                                             <label class="d-md-none small text-muted d-block mb-1">Liga</label>
                                                             <select name="coleccion[<?php echo $id; ?>]" class="form-select form-select-sm border-0 bg-light text-dark fw-bold w-100">
@@ -384,7 +481,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                             </div>
                                                         </div>
 
-                                                        <div class="col-6 col-md-3 col-lg-2">
+                                                        <div class="col-6 col-md-3 col-lg-3">
                                                             <label class="d-md-none small text-muted d-block mb-1">Estado</label>
                                                             <select name="activo[<?php echo $id; ?>]" class="form-select form-select-sm fw-bold border-0 <?php echo ($datos['activo'] == 1 ? 'text-success' : 'text-danger'); ?>">
                                                                 <option value="1" <?php echo ($datos['activo'] == 1 ? 'selected' : ''); ?>>ACTIVO</option>
@@ -392,6 +489,16 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                             </select>
                                                         </div>
                                                     </div>
+                                                    
+                                                    <div class="row mt-3 pt-2 border-top border-secondary">
+                                                        <div class="col-12">
+                                                            <div class="input-group input-group-sm">
+                                                                <span class="input-group-text bg-secondary text-white border-0 small font-monospace">INFO</span>
+                                                                <input type="text" name="descripcion[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($descReal ?? ''); ?>" class="form-control bg-dark text-white border-0 small" placeholder="Descripción breve de la camiseta (Ej: Escudo bordado, parches de liga oficiales...)">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
                                                 </div>
                                             </div>
                                         <?php } ?>
@@ -424,6 +531,18 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                         <button type="submit" class="btn btn-admin-black px-5 py-3 shadow-lg fw-bold w-100 w-md-auto position-sticky bottom-0 z-3" style="bottom: 15px;"><i class="bi bi-save me-2"></i> GUARDAR CAMBIOS</button>
                                     </div>
                                 </form>
+
+                                <?php foreach ($productosAgrupados as $id => $datos) { 
+                                    if ($datos['es_segunda_mano'] == 1) continue;
+                                ?>
+                                    <form id="form-add-foto-<?php echo $id; ?>" action="../controllers/adminController.php" method="POST" enctype="multipart/form-data" class="d-none">
+                                        <input type="hidden" name="accion" value="anadirFotosGaleriaExistente">
+                                        <input type="hidden" name="producto_id" value="<?php echo $id; ?>">
+                                        <input type="hidden" name="pagina_retorno" value="<?php echo $paginaActual; ?>">
+                                        <input type="file" id="add-foto-input-<?php echo $id; ?>" name="imagenes[]" onchange="document.getElementById('form-add-foto-<?php echo $id; ?>').submit();" accept="image/*" multiple>
+                                    </form>
+                                <?php } ?>
+
                         <?php
                                 break;
                             case 'colecciones':
@@ -491,7 +610,6 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                         <?php
                                 break;
                             
-                            // Bloques de seguridad para Rol 3
                             case 'segundaMano':
                             case 'usuarios':
                             case 'looks':
@@ -505,5 +623,70 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const dropZone = document.getElementById('drop-zone');
+        if (!dropZone) return;
+
+        const fileInput = document.getElementById('file-input');
+        const previewContainer = document.getElementById('preview-container');
+        const dataTransfer = new DataTransfer();
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => procesarArchivos(e.target.files));
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('bg-secondary', 'text-white');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('bg-secondary', 'text-white'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('bg-secondary', 'text-white');
+            if (e.dataTransfer.files.length > 0) procesarArchivos(e.dataTransfer.files);
+        });
+
+        window.addEventListener('paste', (e) => {
+            if (e.clipboardData && e.clipboardData.files.length > 0) {
+                if(e.clipboardData.files[0].type.startsWith('image/')) {
+                    e.preventDefault(); 
+                    procesarArchivos(e.clipboardData.files);
+                }
+            }
+        });
+
+        function procesarArchivos(files) {
+            for (let i = 0; i < files.length; i++) {
+                let file = files[i];
+                if (!file.type.startsWith('image/')) continue;
+
+                let safeFile = file;
+                if (file.name === "image.png" || file.name === "image.jpg") {
+                    const extension = file.type.split('/')[1];
+                    const randomName = "captura_" + Date.now() + "_" + Math.floor(Math.random() * 1000) + "." + extension;
+                    safeFile = new File([file], randomName, { type: file.type });
+                }
+                dataTransfer.items.add(safeFile);
+                dibujarMiniatura(safeFile);
+            }
+            fileInput.files = dataTransfer.files;
+            dropZone.querySelector('h5').innerText = dataTransfer.files.length + " fotos locales listas";
+        }
+
+        function dibujarMiniatura(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const container = document.createElement('div');
+                container.className = 'preview-img-container';
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                container.appendChild(img);
+                previewContainer.appendChild(container);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    </script>
 </body>
-</html>//
+</html>
