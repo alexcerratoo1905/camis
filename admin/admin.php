@@ -377,7 +377,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                     <option value="Tercera">Tercera Equipación</option>
                                                 </select>
                                             </div>
-                                            <div class="col-12 col-md-3">
+                                            <div class="col-12 col-md-3">//
                                                 <label class="fw-bold small">Categoría (Liga):</label>
                                                 <select name="coleccion_id" class="form-select border-dark" required>
                                                     <option value="">Selecciona Liga...</option>
