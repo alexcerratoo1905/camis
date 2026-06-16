@@ -1,5 +1,4 @@
 <?php
-
 session_start();
 
 require_once "models/producto.php";
@@ -20,12 +19,20 @@ if ($esModoSecreto) {
     }
 }
 
+// Función para mantener los filtros al hacer clic en ellos
 function crearUrl($clave, $valor) {
     $parametros = $_GET;
     $parametros[$clave] = $valor;
     if (isset($parametros['pagina'])) {
-        unset($parametros['pagina']);
+        unset($parametros['pagina']); // Si cambias un filtro, te devuelve a la página 1
     }
+    return '?' . http_build_query($parametros);
+}
+
+// NUEVA FUNCIÓN: Mantiene los filtros intactos cuando cambias de página
+function crearUrlPaginacion($pagina) {
+    $parametros = $_GET;
+    $parametros['pagina'] = $pagina;
     return '?' . http_build_query($parametros);
 }
 
@@ -51,7 +58,7 @@ if (!empty($filtrosActivos)) {
     $mensajeFiltrado = !empty($titulos) ? implode(" | ", $titulos) : "Resultados de búsqueda";
 } else {
     if ($esModoSecreto) {
-        $listaProductos = $producto->obtenerColeccionSecreta(); 
+        $listaProductos = $producto->obtenerColeccionSecreta();
         $mensajeFiltrado = "Colección Exclusiva";
     } else {
         $listaProductos = $producto->listarProductos(1);
@@ -59,8 +66,26 @@ if (!empty($filtrosActivos)) {
     }
 }
 
+// ==========================================
+// LÓGICA DE PAGINACIÓN (24 productos/página)
+// ==========================================
+$productosPorPagina = 24;
+$totalProductos = is_array($listaProductos) ? count($listaProductos) : 0;
+$totalPaginas = ceil($totalProductos / $productosPorPagina);
+
+$paginaActual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+if ($paginaActual < 1) $paginaActual = 1;
+if ($paginaActual > $totalPaginas && $totalPaginas > 0) $paginaActual = $totalPaginas;
+
+$offset = ($paginaActual - 1) * $productosPorPagina;
+
+// Extraemos exclusivamente los 24 productos que tocan en esta página
+$productosPagina = is_array($listaProductos) ? array_slice($listaProductos, $offset, $productosPorPagina) : [];
+// ==========================================
+
+
 if ($esModoSecreto) {
-    $listaCategorias = []; 
+    $listaCategorias = [];
     $listaColores = $producto->obtenerColoresColeccionSecreta();
 } else {
     $listaCategorias = $producto->listarColecciones();
@@ -68,7 +93,6 @@ if ($esModoSecreto) {
 }
 
 $listaTiposProductos = $producto->listarTiposPrendas();
-
 $precioMax = $producto->obtenerPrecioMinMax("MAX", $esModoSecreto);
 $precioMin = $producto->obtenerPrecioMinMax("MIN", $esModoSecreto);
 
@@ -81,5 +105,4 @@ if (isset($_SESSION['usuario_id'])) {
         $arrayFavoritos[] = $fav['id'] . '-' . $fav['color_id'];
     }
 }
-
 ?>

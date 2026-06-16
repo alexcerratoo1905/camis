@@ -1,9 +1,6 @@
 <?php
-
-
 require_once 'controllers/catalogoController.php';
 include './includes/header.php';
-
 ?>
 
 <main class="container my-5 py-5 mt-5">
@@ -14,7 +11,10 @@ include './includes/header.php';
             <p class="text-muted">Descubre todas nuestras colecciones</p>
         </div>
     </div>
+
     <div class="row">
+        
+        <!-- Botón Móvil Filtros -->
         <div class="col-12 d-lg-none mb-3">
             <button class="btn btn-outline-dark w-100 fw-bold text-uppercase rounded-0 py-3 d-flex justify-content-between align-items-center" type="button" data-bs-toggle="offcanvas" data-bs-target="#filtrosOffcanvas">
                 <span><i class="bi bi-sliders me-2"></i> Filtrar y Ordenar</span>
@@ -183,17 +183,20 @@ include './includes/header.php';
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
+                        </div>
                     </div>
                 </div>
             </div>
         </aside>
+
+        <!-- SECCIÓN DE PRODUCTOS -->
         <section class="col-lg-9">
             <div class="row g-4">
                 <?php
-                if (!empty($listaProductos)) {
-                    foreach ($listaProductos as $prenda) {
+                if (!empty($productosPagina)) {
+                    // Carga SOLO los productos de la página (24 por página)
+                    foreach ($productosPagina as $prenda) {
                         $listaImagenesColor = $imagen->listarImagenesPorColor($prenda["id"], $prenda["color_id"]);
                         $fotoHover = count($listaImagenesColor) > 1 ? $listaImagenesColor[1]["url_imagen"] : $prenda["url_imagen"];
                 ?>
@@ -203,6 +206,7 @@ include './includes/header.php';
                                     <?php
                                     $tieneRebaja = isset($prenda['rebaja']) && $prenda['rebaja'] > 0;
                                     $precioFinal = $prenda['precio'];
+
                                     if ($tieneRebaja) {
                                         $precioFinal = $prenda['precio'] - ($prenda['precio'] * ($prenda['rebaja'] / 100));
                                     }
@@ -210,7 +214,7 @@ include './includes/header.php';
                                     <div class="img-wrapper position-relative">
                                         <img src="<?php echo $prenda["url_imagen"]; ?>" class="card-img-top img-principal transicion-suave" alt="Prenda">
                                         <img src="<?php echo $fotoHover; ?>" class="card-img-top img-hover transicion-suave position-absolute top-0 start-0 w-100 h-100" alt="Prenda Hover">
-
+                                        
                                         <?php if ($tieneRebaja): ?>
                                             <span class="position-absolute top-0 end-0 m-2 badge bg-danger text-white rounded-0 fw-bold px-2 py-1 shadow-sm" style="font-size: 0.8rem; letter-spacing: 1px; z-index: 10;">
                                                 -<?= $prenda['rebaja'] ?>%
@@ -223,12 +227,13 @@ include './includes/header.php';
                                                 <button type="button" class="btn-close" style="font-size: 0.7rem;" onclick="cerrarOverlayTallas(event, <?= $prenda['id'] ?>)"></button>
                                             </div>
                                             <div id="contenedor-botones-<?= $prenda['id'] ?>" class="d-flex justify-content-center flex-wrap gap-2">
+                                                <!-- Lógica JS -->
                                             </div>
                                         </div>
                                     </div>
+
                                     <div class="card-body text-center px-0">
                                         <h5 class="card-title text-uppercase fw-bold fs-6 mt-2 mb-1"><?php echo $prenda["nombre"] ?></h5>
-
                                         <?php if ($tieneRebaja): ?>
                                             <p class="card-text mb-2">
                                                 <del class="text-muted small me-2"><?= number_format($prenda['precio'], 2) ?> €</del>
@@ -239,12 +244,14 @@ include './includes/header.php';
                                         <?php endif; ?>
                                     </div>
                                 </a>
+
                                 <div class="d-flex align-items-center justify-content-between gap-2 mt-auto px-1 pt-2">
                                     <button type="button" class="btn btn-principal rounded-0 flex-grow-1 text-uppercase fw-bold"
                                         style="height: 40px; font-size: 0.75rem; letter-spacing: 1px;"
                                         onclick="abrirOverlayTallas(event, <?= $prenda['id'] ?>, <?= $prenda['color_id'] ?>)">
                                         Añadir
                                     </button>
+                                    
                                     <?php
                                     $iconoCorazon = 'bi-heart';
                                     if (isset($arrayFavoritos) && in_array($prenda['id'] . '-' . $prenda['color_id'], $arrayFavoritos)) {
@@ -262,18 +269,59 @@ include './includes/header.php';
                 <?php
                     }
                 } else {
-                    echo "<p class='text-center'>No hay productos disponibles en este momento.</p>";
+                    echo "<p class='text-center w-100 py-5 text-muted'>No se han encontrado prendas con estos filtros.</p>";
                 }
                 ?>
             </div>
+
+            <!-- ========================================== -->
+            <!-- CONTROLES DE PAGINACIÓN                    -->
+            <!-- ========================================== -->
+            <?php if ($totalPaginas > 1): ?>
+                <div class="row mt-5 pt-3 border-top">
+                    <div class="col-12 d-flex justify-content-center">
+                        <nav aria-label="Navegación del catálogo">
+                            <ul class="pagination mb-0 shadow-sm">
+                                
+                                <!-- Botón Anterior -->
+                                <?php $disabledPrev = ($paginaActual <= 1) ? 'disabled' : ''; ?>
+                                <li class="page-item <?php echo $disabledPrev; ?>">
+                                    <a class="page-link text-dark rounded-0 border-dark" href="<?php echo $paginaActual > 1 ? crearUrlPaginacion($paginaActual - 1) : '#'; ?>" aria-label="Anterior">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                
+                                <!-- Números de página -->
+                                <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                                    <li class="page-item">
+                                        <a class="page-link rounded-0 border-dark <?php echo ($paginaActual == $i) ? 'bg-dark text-white' : 'text-dark'; ?>" href="<?php echo crearUrlPaginacion($i); ?>">
+                                            <?php echo $i; ?>
+                                        </a>
+                                    </li>
+                                <?php endfor; ?>
+                                
+                                <!-- Botón Siguiente -->
+                                <?php $disabledNext = ($paginaActual >= $totalPaginas) ? 'disabled' : ''; ?>
+                                <li class="page-item <?php echo $disabledNext; ?>">
+                                    <a class="page-link text-dark rounded-0 border-dark" href="<?php echo $paginaActual < $totalPaginas ? crearUrlPaginacion($paginaActual + 1) : '#'; ?>" aria-label="Siguiente">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            <?php endif; ?>
+            <!-- ========================================== -->
+
         </section>
     </div>
 </main>
 
 <script src="public/js/catalogo.js"></script>
-<?php
 
+<?php
 include './includes/prendasRecientes.php';
 include './includes/footer.php';
-
 ?>

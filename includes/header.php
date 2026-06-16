@@ -55,14 +55,12 @@
           <li class="nav-item"><a class="nav-link" href="../catalogo.php">Catalogo</a></li>
           <li class="nav-item"><a class="nav-link" href="catalogo.php?genero=1">Hombre</a></li>
           <li class="nav-item"><a class="nav-link" href="catalogo.php?genero=2">Mujer</a></li>
-          <li class="nav-item"><a class="nav-link text-danger fw-bold" href="../citas.php">Pide Cita</a></li>
-          <li class="nav-item"><a class="nav-link text-danger fw-bold" href="../segundaMano.php">Segunda Mano</a></li>
           <li class="nav-item"><a class="nav-link text-danger fw-bold" href="../contacto.php">Contacto</a></li>
         </ul>
       </div>
 
       <a class="navbar-brand position-absolute top-50 start-50 translate-middle m-0 fw-bold fs-4 text-uppercase ls-2" href="index.php">
-        HERROR
+        DJALEXITO
       </a>
 
       <!-- TUS ICONOS DE LA DERECHA INTACTOS -->

@@ -18,14 +18,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 localStorage.setItem('tiempoModal', Date.now());
             }, 3000);
         }
-
-
-
     }
 
     inicializarBuscadorEnVivo();
-
-
 
     let graciasCompra = document.getElementById("graciasCompra");
 
@@ -140,8 +135,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    
-
     if (typeof bienvenidoAlerta !== 'undefined') {
         if (bienvenidoAlerta === 'true') {
             swalRapido.fire({
@@ -168,25 +161,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 
-
-
-document.addEventListener("DOMContentLoaded", function () {
-    const animContainer = document.querySelector('.anim-container');
-    const loginLink = document.querySelector('.SignInLink');
-    const registerLink = document.querySelector('.SignUpLink');
-
-    if (registerLink && loginLink && animContainer) {
-        registerLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            animContainer.classList.add('active');
-        });
-
-        loginLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            animContainer.classList.remove('active');
-        });
-    }
-});
 
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -355,7 +329,7 @@ function pintarPrendasRecientes() {
                             <img src="${prenda.imagen}" class="card-img-top rounded-0 img-fluida-reciente" alt="${prenda.nombre}">
                         </a>
                         
-                        <div id="overlay-tallas-${prenda.id}" class="overlay-tallas d-none position-absolute bottom-0 start-0 w-100 bg-white bg-opacity-75 p-3 text-center">
+                        <div id="overlay-tallas-${prenda.id}" class="overlay-tallas d-none position-absolute bottom-0 start-0 w-100 bg-white bg-opacity-75 p-3 text-center" onclick="event.preventDefault();">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="small fw-bold text-uppercase" style="letter-spacing: 1px;">Selecciona Talla</span>
                                 <button type="button" class="btn-close" style="font-size: 0.7rem;" onclick="cerrarOverlayTallas(event, ${prenda.id})"></button>
@@ -383,11 +357,14 @@ function pintarPrendasRecientes() {
     carruselInner.innerHTML = htmlAcumulado;
 }
 
+// =========================================================
+// NUEVA LÓGICA DE AÑADIDO DIRECTO AL CARRITO (DROPSHIPPING)
+// =========================================================
 
 function abrirOverlayTallas(event, idPrenda, idColor) {
     event.preventDefault();
 
-    const tarjeta = event.target.closest('.col-6');
+    const tarjeta = event.target.closest('.col-6') || event.target.closest('.product-card');
     if (!tarjeta) return;
 
     const overlay = tarjeta.querySelector('.overlay-tallas');
@@ -396,42 +373,35 @@ function abrirOverlayTallas(event, idPrenda, idColor) {
     if (!overlay || !contenedor) return;
 
     overlay.classList.remove('d-none');
-    contenedor.innerHTML = '<span class="small fw-bold text-muted mt-2">Cargando tallas...</span>';
+    contenedor.innerHTML = ''; // Limpiamos para que no salga "Cargando..."
 
-    fetch(`controllers/apiTallasController.php?idPrenda=${idPrenda}&idColor=${idColor}`)
-        .then(respuesta => respuesta.json())
-        .then(tallas => {
-            contenedor.innerHTML = '';
+    // Hardcodeamos las tallas disponibles de Dropshipping (Instantáneo)
+    const tallasFijas = [
+        { id: 'S', label: 'S' },
+        { id: 'M', label: 'M' },
+        { id: 'L', label: 'L' },
+        { id: 'XL', label: 'XL' },
+        { id: '2XL', label: '2XL (+1€)' },
+        { id: '3XL', label: '3XL (+1€)' },
+        { id: '4XL', label: '4XL (+1€)' }
+    ];
 
-            if (tallas.length === 0) {
-                contenedor.innerHTML = '<span class="small text-danger fw-bold mt-2">Agotado</span>';
-                return;
-            }
+    tallasFijas.forEach(tallaObj => {
+        let btn = document.createElement('button');
+        btn.className = 'btn btn-outline-dark rounded-0 px-2 py-1 fw-bold m-1';
+        btn.style.fontSize = '0.8rem';
+        btn.textContent = tallaObj.label;
 
-            tallas.forEach(tallaObj => {
-                let btn = document.createElement('button');
-                btn.className = 'btn btn-outline-dark rounded-0 px-3 py-1 fw-bold';
-                btn.textContent = tallaObj.talla;
+        // Al hacer click, manda directamente la talla real ('2XL') al carrito
+        btn.onclick = (e) => anadirDirectoCarrito(e, idPrenda, idColor, tallaObj.id);
 
-                if (tallaObj.stock <= 0) {
-                    btn.classList.add('talla-agotada');
-                    btn.disabled = true;
-                } else {
-                    btn.onclick = (e) => anadirDirectoCarrito(e, idPrenda, idColor, tallaObj.talla);
-                }
-
-                contenedor.appendChild(btn);
-            });
-        })
-        .catch(error => {
-            console.error("Error cargando tallas:", error);
-            contenedor.innerHTML = '<span class="small text-danger mt-2">Error al cargar</span>';
-        });
+        contenedor.appendChild(btn);
+    });
 }
 
 function cerrarOverlayTallas(event, idPrenda) {
     event.preventDefault();
-    const tarjeta = event.target.closest('.col-6');
+    const tarjeta = event.target.closest('.col-6') || event.target.closest('.product-card');
     if (tarjeta) {
         const overlay = tarjeta.querySelector('.overlay-tallas');
         if (overlay) overlay.classList.add('d-none');
@@ -454,7 +424,6 @@ function anadirDirectoCarrito(event, idPrenda, idColor, talla) {
         body: datos
     })
         .then(respuesta => {
-
             let iconoCesta = document.getElementById('contador-carrito');
             if (iconoCesta) {
                 iconoCesta.innerText = parseInt(iconoCesta.innerText || 0) + 1;
@@ -495,17 +464,13 @@ document.addEventListener("DOMContentLoaded", function () {
     pintarPrendasRecientes();
 });
 
-
 document.addEventListener('DOMContentLoaded', function() {
-    
     const contenedorPrendaSubida = document.getElementById('prendaSubida');
-    
     if (contenedorPrendaSubida) {
         setTimeout(function() {
             window.location.href = 'perfil.php?mensaje=prenda_subida';
         }, 4000); 
     }
-
 });
 
 document.addEventListener("DOMContentLoaded", function () {

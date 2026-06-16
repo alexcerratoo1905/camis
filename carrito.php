@@ -32,6 +32,34 @@ include './includes/header.php';
     <?php else: ?>
         <div class="row g-5">
             <div class="col-lg-8">
+                
+                <?php
+                // La regla es: a los 5 artículos el envío es gratis
+                $faltanEnvio = 5 - $numArticulos;
+                $porcentajeEnvio = min(($numArticulos / 5) * 100, 100);
+                ?>
+                <div class="card border-0 bg-light p-3 p-md-4 mb-4 shadow-sm animate__animated animate__fadeIn">
+                    <div class="d-flex justify-content-between align-items-end mb-2">
+                        <?php if ($faltanEnvio > 0): ?>
+                            <span class="fw-bold text-uppercase small" style="letter-spacing: 1px;">
+                                ¡Añade <span class="text-danger fs-6"><?php echo $faltanEnvio; ?> prenda(s) más</span> para envío <span class="text-success">GRATIS</span>!
+                            </span>
+                        <?php else: ?>
+                            <span class="fw-bold text-uppercase text-success small" style="letter-spacing: 1px;">
+                                <i class="bi bi-box-seam-fill me-2"></i>¡Has desbloqueado el envío GRATIS!
+                            </span>
+                        <?php endif; ?>
+                        <span class="small text-muted fw-bold"><?php echo $numArticulos; ?> / 5</span>
+                    </div>
+                    <div class="progress rounded-0 border border-dark" style="height: 14px; background-color: #fff;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated <?php echo ($faltanEnvio <= 0) ? 'bg-success' : 'bg-dark'; ?>" role="progressbar" style="width: <?php echo $porcentajeEnvio; ?>%;" aria-valuenow="<?php echo $porcentajeEnvio; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <?php if ($faltanEnvio > 0): ?>
+                        <div class="mt-2 text-end">
+                            <a href="catalogo.php" class="text-dark small fw-bold text-decoration-underline">Seguir comprando <i class="bi bi-arrow-right"></i></a>
+                        </div>
+                    <?php endif; ?>
+                </div>
                 <?php foreach ($carritoDetallado as $item){ ?>
                     <div class="card border-0 border-bottom rounded-0 mb-3 pb-3">
                         <div class="row g-0">
@@ -53,7 +81,6 @@ include './includes/header.php';
                                         </h5>
                                         <p class="text-muted small mb-1">Color: <?php echo $item['color_nombre']; ?> | Talla: <?php echo $item['talla']; ?></p>
                                         
-                                        <!-- Pintamos los EXTRAS si los tiene -->
                                         <ul class="list-unstyled mt-1 mb-0 small text-muted fst-italic">
                                             <?php if ($item['extra_player']): ?><li>+ Versión Player</li><?php endif; ?>
                                             <?php if ($item['extra_pantalon']): ?><li>+ Pantalón a juego</li><?php endif; ?>

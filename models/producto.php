@@ -222,8 +222,6 @@ class Producto
         return $this;
     }
 
-
-
     /**
      * Get the value of esSegundaMano
      */
@@ -317,7 +315,7 @@ class Producto
         return $sentencia->fetchAll(PDO::FETCH_ASSOC);
     }
 
-public function listarInventarioCompleto()
+    public function listarInventarioCompleto()
     {
         $sql = "SELECT p.id as prenda_id, p.nombre, p.precio, p.rebaja, 
                        c.id as color_id, c.nombre as nombre_color, 
@@ -375,7 +373,8 @@ public function listarInventarioCompleto()
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-public function actualizarDatosBasicosPrenda($id, $rebaja, $activo, $precio = null, $coleccionId = null) {
+
+    public function actualizarDatosBasicosPrenda($id, $rebaja, $activo, $precio = null, $coleccionId = null) {
         if ($precio !== null) { 
             if ($coleccionId === "") {
                 $coleccionId = null;
@@ -422,7 +421,7 @@ public function actualizarDatosBasicosPrenda($id, $rebaja, $activo, $precio = nu
         return $sentencia->fetch(PDO::FETCH_ASSOC);
     }
 
-public function listarColecciones($modoAdmin = false)
+    public function listarColecciones($modoAdmin = false)
     {
         if ($modoAdmin) {
             $sql = "SELECT * FROM colecciones  ORDER BY nombre ASC";
@@ -493,8 +492,6 @@ public function listarColecciones($modoAdmin = false)
         return $ordenSql;
     }
 
-
-
     public function listaColores()
     {
         $sql = "SELECT id, nombre, valor_hexadecimal from colores";
@@ -519,7 +516,7 @@ public function listarColecciones($modoAdmin = false)
         }
     }
 
- public function filtrarCombinado($parametros, $esModoSecreto = false) {
+    public function filtrarCombinado($parametros, $esModoSecreto = false) {
         $activa = $esModoSecreto ? 3 : 1;
         
         $sql = "SELECT p.*, c.id as color_id, c.nombre as color_nombre, MIN(i.url_imagen) as url_imagen
@@ -528,7 +525,6 @@ public function listarColecciones($modoAdmin = false)
                 INNER JOIN colores c ON pc.color_id = c.id
                 INNER JOIN colecciones col ON p.coleccion_id = col.id
                 LEFT JOIN imagenes_productos i ON p.id = i.producto_id AND i.color_id = c.id AND i.es_principal = 1
-                LEFT JOIN producto_tallas pt ON p.id = pt.producto_id AND c.id = pt.color_id 
                 WHERE p.activo = 1 AND col.activa = $activa";
                 
         $valoresFiltrado = [];
@@ -549,10 +545,10 @@ public function listarColecciones($modoAdmin = false)
             $sql .= " AND c.nombre = :color";
             $valoresFiltrado[':color'] = $parametros['color'];
         }
-        if (!empty($parametros['talla'])) {
-            $sql .= " AND pt.talla = :talla AND pt.stock > 0";
-            $valoresFiltrado[':talla'] = $parametros['talla'];
-        }
+        
+        // ELIMINADO EL FILTRO ESTRICTO DE STOCK PARA QUE DROPSHIPPING FUNCIONE
+        // Si eligen talla, simplemente lo ignoramos en la query porque siempre hay talla
+
         if (!empty($parametros['rebajas'])) {
             $sql .= " AND p.rebaja > 0";
         }
@@ -577,7 +573,6 @@ public function listarColecciones($modoAdmin = false)
 
     public function actualizarStock($idPrenda, $idColor, $talla, $cantidad)
     {
-
         try {
             $sql = "UPDATE producto_tallas SET stock = stock - :cantidad WHERE producto_id = :idPrenda AND color_id = :idColor AND talla = :talla";
             $sentencia = $this->conexionDataBase->prepare($sql);
@@ -593,6 +588,7 @@ public function listarColecciones($modoAdmin = false)
             return false;
         }
     }
+
     public function obtenerPrecioMinMax($valor, $esModoSecreto = false) {
         $funcionSql = "MAX";
         if (strtoupper($valor) === "MIN") {
@@ -615,7 +611,6 @@ public function listarColecciones($modoAdmin = false)
         }
     }
 
-
     public function buscarPorNombre($nombreABuscar)
     {
         $sql = "SELECT p.id, p.nombre, p.precio, c.id AS color_id, c.nombre AS color_nombre, MIN(i.url_imagen) AS url_imagen
@@ -634,18 +629,18 @@ public function listarColecciones($modoAdmin = false)
         return $sentencia->fetchAll(PDO::FETCH_ASSOC);
     }
 
-public function buscarPorNombreChatBot($nombreABuscar)
+    // ARREGLADO: El ChatBot tampoco buscará por stock para que encuentre las prendas nuevas
+    public function buscarPorNombreChatBot($nombreABuscar)
     {
         $sql = "SELECT p.id, p.nombre, p.descripcion, p.precio, c.nombre AS color_nombre, 
                        MIN(i.url_imagen) AS url_imagen,
-                       GROUP_CONCAT(CONCAT(pt.talla, ': ', pt.stock, ' unidades') SEPARATOR ' | ') AS tallas_stock
+                       'Todas las tallas (S a 4XL)' AS tallas_stock
                 FROM productos p
                 INNER JOIN producto_colores pc ON p.id = pc.producto_id
                 INNER JOIN colores c ON pc.color_id = c.id
                 INNER JOIN colecciones col ON p.coleccion_id = col.id 
-                INNER JOIN producto_tallas pt ON p.id = pt.producto_id AND c.id = pt.color_id
                 LEFT JOIN imagenes_productos i ON p.id = i.producto_id AND i.color_id = c.id AND i.es_principal = 1
-                WHERE p.activo = 1 AND col.activa = 1 AND p.nombre LIKE :nombreABuscar AND pt.stock > 0
+                WHERE p.activo = 1 AND col.activa = 1 AND p.nombre LIKE :nombreABuscar
                 GROUP BY p.id, c.id
                 LIMIT 6";
 
@@ -832,8 +827,6 @@ public function buscarPorNombreChatBot($nombreABuscar)
         return $sentencia->fetchAll(PDO::FETCH_ASSOC);
     }
 
-
-
     public function verificarCodigoDescuento($codigo, $email)
     {
         try {
@@ -880,7 +873,7 @@ public function buscarPorNombreChatBot($nombreABuscar)
         return $sentencia->fetchAll(PDO::FETCH_ASSOC);
     }
 
-public function actualizarRevisionSegundaMano($id, $estado, $idVendedor) {
+    public function actualizarRevisionSegundaMano($id, $estado, $idVendedor) {
         try {
             $sql = "UPDATE productos SET estado_revision = :estado, id_usuario_vendedor = :idV WHERE id = :id";
             $stmt = $this->conexionDataBase->prepare($sql);
@@ -895,7 +888,7 @@ public function actualizarRevisionSegundaMano($id, $estado, $idVendedor) {
         }
     }
 
-   public function crearPrendaNueva($nombre, $descripcion, $precio, $tipo_id, $coleccion_id, $genero, $color_id, $tallas_stock, $urls_imagenes) {
+    public function crearPrendaNueva($nombre, $descripcion, $precio, $tipo_id, $coleccion_id, $genero, $color_id, $tallas_stock, $urls_imagenes) {
         try {
             $this->conexionDataBase->beginTransaction();
 
@@ -984,3 +977,4 @@ public function actualizarRevisionSegundaMano($id, $estado, $idVendedor) {
         }
     }
 }
+?>
