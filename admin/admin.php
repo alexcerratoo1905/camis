@@ -31,7 +31,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HERROR | Panel de Administración</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
@@ -39,27 +39,28 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/public/css/style.css">
     <style>
+        body, html { overflow-x: hidden; }
         #drop-zone { border: 2px dashed #343a40; border-radius: 8px; background-color: #f8f9fa; transition: all 0.3s ease; cursor: pointer; }
         #drop-zone:hover, #drop-zone.dragover { background-color: #e9ecef; border-color: #0dcaf0; }
         .preview-img-container { position: relative; display: inline-block; margin-right: 10px; margin-bottom: 10px; }
         .preview-img-container img { width: 100px; height: 100px; object-fit: cover; border-radius: 5px; border: 1px solid #ccc; }
         .crm-thumb-container { position: relative; display: inline-block; margin-right: 8px; margin-bottom: 8px; }
         .crm-thumb { width: 65px; height: 65px; object-fit: cover; border-radius: 4px; border: 1px solid #444; background-color: #fff; }
-        .btn-borrar-foto { position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-decoration: none; }
+        .btn-borrar-foto { position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-decoration: none; z-index: 10; }
         .btn-borrar-foto:hover { background: #bd2130; color: white; }
-        .nav-tabs .nav-link { color: #6c757d; border-radius: 0; }
-        .nav-tabs .nav-link.active { color: #000; border-bottom: 3px solid #000; font-weight: bold; background-color: transparent; }
         
-        /* Botón de guardado flotante e indestructible */
-        .btn-flotante-guardar {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 9999;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            transition: transform 0.2s;
-        }
+        /* Arreglo Responsive Pestañas y Color Negro Fijo */
+        .nav-tabs-scroll { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; white-space: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px; border-bottom: 2px solid #dee2e6; }
+        .nav-tabs-scroll::-webkit-scrollbar { height: 4px; }
+        .nav-tabs-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .nav-tabs .nav-link { color: #495057 !important; border-radius: 0; padding: 0.5rem 1rem; font-weight: 600; border: none; }
+        .nav-tabs .nav-link:hover { color: #000 !important; background-color: #f8f9fa; }
+        .nav-tabs .nav-link.active { color: #000 !important; border-bottom: 3px solid #000; font-weight: 800; background-color: #f8f9fa !important; }
+        
+        /* Botón de guardado flotante */
+        .btn-flotante-guardar { position: fixed; bottom: 30px; right: 30px; z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: transform 0.2s; }
         .btn-flotante-guardar:hover { transform: scale(1.05); }
+        .btn-flotante-movil { position: fixed; bottom: 0; left: 0; width: 100%; padding: 15px; background: white; border-top: 1px solid #ddd; z-index: 9999; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); }
     </style>
 </head>
 
@@ -69,7 +70,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
         <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-5 text-white text-uppercase fw-bold" href="#">
             HERROR <span class="fs-6 fw-normal">Admin</span>
         </a>
-        <button class="navbar-toggler position-absolute d-md-none collapsed border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Abrir menú" style="right: 15px; top: 12px;">
+        <button class="navbar-toggler position-absolute d-md-none collapsed border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
     </header>
@@ -107,7 +108,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                 </div>
             </nav>
 
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content position-relative">
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content position-relative pb-5">
 
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
                     <h1 class="h2 text-uppercase fw-bold"><?php echo ($seccion == 'colecciones') ? 'Categorías' : ucfirst($seccion); ?></h1>
@@ -125,28 +126,180 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                         case 'variante_anadida': $msgTexto = "¡Nueva equipación añadida al producto con éxito!"; break;
                     }
                     if ($msgTexto != "") {
-                        echo '<div class="alert alert-success alert-dismissible fade show animate__animated animate__fadeIn" role="alert"><i class="bi bi-check-circle-fill me-2"></i> '.$msgTexto.'<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+                        echo '<div class="alert alert-success alert-dismissible fade show animate__animated animate__fadeIn"><i class="bi bi-check-circle-fill me-2"></i> '.$msgTexto.'<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
                     }
                 }
                 if (isset($_GET['error'])) {
-                    echo '<div class="alert alert-danger alert-dismissible fade show animate__animated animate__shakeX" role="alert"><i class="bi bi-exclamation-triangle-fill me-2"></i> Ocurrió un error. Verifica que has rellenado todo bien.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+                    echo '<div class="alert alert-danger alert-dismissible fade show animate__animated animate__shakeX"><i class="bi bi-exclamation-triangle-fill me-2"></i> Ocurrió un error. Verifica que has rellenado todo bien.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
                 }
                 ?>
 
                 <div class="row">
-                    <div class="col-12 pb-5">
+                    <div class="col-12 pb-5 mb-5">
                         <?php
                         switch ($seccion) {
                             case 'pedidos':
-                                // [El código exacto que tenías de pedidos aquí - Se mantiene intacto para no romper nada]
-                                // (Para acortar te lo resumo, usa tu código de pedidos que te funcionaba bien)
                                 $listaPedidos = $pedido->listarPedidos();
-                                // ...
+                        ?>
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h3>Gestión y Seguimiento de Pedidos</h3>
+                                    <span class="badge bg-dark fs-6">Total: <?php echo count($listaPedidos); ?> pedidos</span>
+                                </div>
+
+                                <div class="table-responsive bg-white p-3 admin-card shadow-sm">
+                                    <table class="table admin-table table-hover align-middle">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Cliente</th>
+                                                <th>Fecha</th>
+                                                <th>Total</th>
+                                                <th>Estado</th>
+                                                <th>Detalles Pedido</th>
+                                                <th>Acciones Envío</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($listaPedidos as $p) { 
+                                                $datosCliente = $usu->obtenerDatosUsu($p['usuario_id']);
+                                                $direccionCompleta = !empty($p['direccion_envio']) ? $p['direccion_envio'] : (($datosCliente['direccion'] ?? 'No definida') . ', ' . ($datosCliente['ciudad'] ?? '') . ' (' . ($datosCliente['codigo_postal'] ?? '') . ')');
+                                            ?>
+                                                <tr>
+                                                    <td class="fw-bold">#<?php echo $p['id']; ?></td>
+                                                    <td><?php echo htmlspecialchars($p['nombre_cliente']); ?></td>
+                                                    <td><?php echo date('d/m/Y H:i', strtotime($p['fecha'])); ?></td>
+                                                    <td class="fw-bold"><?php echo number_format($p['total'], 2); ?> €</td>
+                                                    <td>
+                                                        <form action="../controllers/adminController.php" method="POST" class="d-flex gap-2 m-0">
+                                                            <input type="hidden" name="accion" value="cambiarEstadoPedido">
+                                                            <input type="hidden" name="idPedido" value="<?php echo $p['id']; ?>">
+                                                            <select name="nuevoEstado" class="form-select form-select-sm fw-bold" style="width: auto;">
+                                                                <?php
+                                                                $estadosPosibles = ['pendiente', 'pagado', 'enviado', 'entregado', 'cancelado'];
+                                                                foreach ($estadosPosibles as $estado) {
+                                                                    $seleccionado = ($p['estado'] === $estado) ? 'selected' : '';
+                                                                ?>
+                                                                    <option value="<?php echo $estado; ?>" <?php echo $seleccionado; ?>><?php echo ucfirst($estado); ?></option>
+                                                                <?php } ?>
+                                                            </select>
+                                                            <button type="submit" class="btn btn-sm btn-dark">Actualizar</button>
+                                                        </form>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-dark fw-bold" data-bs-toggle="modal" data-bs-target="#modalDetalles<?php echo $p['id']; ?>">
+                                                            <i class="bi bi-card-list me-1"></i> Ver Pedido
+                                                        </button>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#modalTracking<?php echo $p['id']; ?>">
+                                                            <i class="bi bi-truck me-1"></i> Tracking
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            <?php } ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <?php foreach ($listaPedidos as $p) { 
+                                    $datosCliente = $usu->obtenerDatosUsu($p['usuario_id']);
+                                    $direccionCompleta = !empty($p['direccion_envio']) ? $p['direccion_envio'] : (($datosCliente['direccion'] ?? 'No definida') . ', ' . ($datosCliente['ciudad'] ?? '') . ' (' . ($datosCliente['codigo_postal'] ?? '') . ')');
+                                ?>
+                                    <div class="modal fade" id="modalDetalles<?php echo $p['id']; ?>" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                                            <div class="modal-content rounded-0 border-dark shadow-lg">
+                                                <div class="modal-header bg-dark text-white rounded-0">
+                                                    <h5 class="modal-title text-uppercase fw-bold"><i class="bi bi-box-seam me-2"></i>Preparar Pedido #<?php echo str_pad($p['id'], 5, "0", STR_PAD_LEFT); ?></h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body p-4 bg-light">
+                                                    <div class="row mb-4 bg-white p-3 border border-secondary shadow-sm">
+                                                        <div class="col-md-6 mb-3 mb-md-0 border-end border-secondary">
+                                                            <h6 class="fw-bold text-uppercase text-muted small mb-2"><i class="bi bi-person-fill me-1"></i>Contacto Cliente</h6>
+                                                            <p class="mb-0 fw-bold fs-6"><?php echo htmlspecialchars($p['nombre_cliente']); ?></p>
+                                                            <p class="mb-0 small"><a href="mailto:<?php echo htmlspecialchars($datosCliente['email']); ?>" class="text-decoration-none text-dark"><?php echo htmlspecialchars($datosCliente['email']); ?></a></p>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <h6 class="fw-bold text-uppercase text-muted small mb-2"><i class="bi bi-geo-alt-fill me-1"></i>Dirección de Entrega</h6>
+                                                            <p class="mb-0 small fw-bold" style="line-height: 1.6;"><?php echo htmlspecialchars($direccionCompleta); ?></p>
+                                                        </div>
+                                                    </div>
+
+                                                    <h6 class="fw-bold text-uppercase border-bottom border-dark border-2 pb-2 mb-3 mt-4">Artículos a preparar:</h6>
+                                                    <ul class="list-group list-group-flush rounded-0 shadow-sm border border-secondary">
+                                                        <?php
+                                                        $lineas = $pedido->obtenerInfoPedido($p['id']);
+                                                        foreach ($lineas as $linea) {
+                                                            $fotoMuestra = !empty($linea['url_imagen']) ? '../' . $linea['url_imagen'] : '../public/img/fondo.jpg';
+                                                        ?>
+                                                        <li class="list-group-item p-3 border-bottom border-secondary bg-white">
+                                                            <div class="d-flex align-items-center">
+                                                                <img src="<?php echo htmlspecialchars($fotoMuestra); ?>" class="me-3 border border-dark rounded-1" style="width: 80px; height: 80px; object-fit: cover;">
+                                                                <div class="flex-grow-1">
+                                                                    <h6 class="fw-bold text-uppercase mb-2 fs-5">
+                                                                        <span class="text-primary me-1"><?php echo $linea['cantidad']; ?>x</span> <?php echo htmlspecialchars($linea['producto_nombre']); ?>
+                                                                    </h6>
+                                                                    <div class="d-flex flex-wrap gap-2 mb-2">
+                                                                        <span class="badge bg-dark rounded-0 px-2 py-1 fs-6">Talla: <?php echo htmlspecialchars($linea['talla'] ?? 'N/A'); ?></span>
+                                                                        <span class="badge border border-dark text-dark rounded-0 px-2 py-1 fs-6">Color: <?php echo htmlspecialchars($linea['color_nombre'] ?? 'N/A'); ?></span>
+                                                                    </div>
+                                                                    <?php if (!empty($linea['extras_texto'])): ?>
+                                                                        <div class="mt-2 p-2 bg-danger bg-opacity-10 border border-danger border-opacity-50">
+                                                                            <p class="mb-0 small text-danger fw-bold text-uppercase" style="letter-spacing: 0.5px;">
+                                                                                <i class="bi bi-stars me-1"></i> EXTRAS: <span class="text-dark fs-6 ms-1"><?php echo htmlspecialchars($linea['extras_texto']); ?></span>
+                                                                            </p>
+                                                                        </div>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                        <?php } ?>
+                                                    </ul>
+                                                </div>
+                                                <div class="modal-footer rounded-0 bg-white">
+                                                    <button type="button" class="btn btn-dark fw-bold text-uppercase px-4" data-bs-dismiss="modal">Cerrar Detalles</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="modal fade" id="modalTracking<?php echo $p['id']; ?>" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content rounded-0 border-dark">
+                                                <div class="modal-header bg-dark text-white rounded-0">
+                                                    <h5 class="modal-title text-uppercase fw-bold"><i class="bi bi-envelope me-2"></i>Notificar Envío #<?php echo $p['id']; ?></h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <form action="../controllers/enviarTrackingController.php" method="POST">
+                                                    <div class="modal-body p-4">
+                                                        <input type="hidden" name="id_pedido" value="<?php echo $p['id']; ?>">
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-muted text-uppercase">Destinatario:</label>
+                                                            <input type="text" class="form-control bg-light border-dark" value="<?php echo htmlspecialchars($p['nombre_cliente'] . ' ('.$datosCliente['email'].')'); ?>" readonly>
+                                                            <input type="hidden" name="email_cliente" value="<?php echo $datosCliente['email']; ?>">
+                                                            <input type="hidden" name="nombre_cliente" value="<?php echo $p['nombre_cliente']; ?>">
+                                                        </div>
+                                                        <hr class="border-secondary">
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-uppercase">Número de Seguimiento (Tracking):</label>
+                                                            <input type="text" name="tracking_number" class="form-control border-dark" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-uppercase">Enlace web (URL):</label>
+                                                            <input type="url" name="tracking_url" class="form-control border-dark" placeholder="https://www.correos.es/tracking" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer bg-light border-top rounded-0">
+                                                        <button type="submit" class="btn btn-dark rounded-0 btn-sm fw-bold"><i class="bi bi-send me-1"></i> Disparar Correo</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php } ?>
+                        <?php
                                 break;
 
-                            // =========================================================
-                            // SECCIÓN DE PRODUCTOS (INVENTARIO MASIVO) CON TABS
-                            // =========================================================
                             case 'productos':
                                 $prod = new Producto($db->conectar());
 
@@ -160,13 +313,13 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
 
                                 $listaInventario = $prod->listarProductosPaginados(false, $productosPorPagina, $offset);
 
-                                // AGRUPAMOS POR PRODUCTO, Y DENTRO TODAS SUS VARIANTES (Local, Visitante...)
                                 $productosAgrupados = [];
                                 if (!empty($listaInventario)) {
                                     foreach ($listaInventario as $item) {
                                         $pId = $item['prenda_id'];
                                         if (!isset($productosAgrupados[$pId])) {
                                             $productosAgrupados[$pId] = [
+                                                'producto_id' => $item['prenda_id'],
                                                 'nombre' => $item['nombre'],
                                                 'precio' => $item['precio'],
                                                 'rebaja' => $item['rebaja'],
@@ -195,7 +348,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                 <div class="collapse mb-4 mt-3" id="formNuevaPrenda">
                                     <div class="card card-body admin-card border-0 shadow-sm bg-light">
                                         <h5 class="fw-bold mb-3 text-uppercase"><i class="bi bi-box-seam me-2"></i>Añadir Nueva Camiseta al Catálogo</h5>
-                                        <form action="../controllers/adminController.php" method="POST" enctype="multipart/form-data" class="row g-3" id="formularioSubida">
+                                        <form action="../controllers/adminController.php" method="POST" enctype="multipart/form-data" class="row g-3">
                                             <input type="hidden" name="accion" value="crearPrendaTienda">
 
                                             <div class="col-md-4">
@@ -249,13 +402,12 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                     <input type="hidden" name="pagina_retorno" value="<?php echo $paginaActual; ?>">
 
                                     <?php if (empty($productosAgrupados)) { ?>
-                                        <div class="alert alert-secondary text-center py-5">No se han encontrado productos.</div>
+                                        <div class="alert alert-secondary text-center py-5">No se han encontrado productos en esta página.</div>
                                     <?php } else { ?>
                                         <?php 
                                         foreach ($productosAgrupados as $id => $datos) { 
                                             if ($datos['es_segunda_mano'] == 1) continue;
                                             
-                                            // Traemos la descripción del producto base
                                             $stmtDesc = $conexion->prepare("SELECT descripcion FROM productos WHERE id = ?");
                                             $stmtDesc->execute([$id]);
                                             $descReal = $stmtDesc->fetchColumn();
@@ -266,7 +418,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                         <div class="col-12 col-lg-4">
                                                             <div class="d-flex align-items-center gap-1 mb-1">
                                                                 <span class="text-secondary fw-bold small">#<?php echo $id; ?></span>
-                                                                <input type="text" name="nombre[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($datos['nombre']); ?>" class="form-control form-control-sm border-0 bg-secondary text-white fw-bold text-uppercase w-100" style="letter-spacing: 0.5px;" required>
+                                                                <input type="text" name="nombre[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($datos['nombre']); ?>" class="form-control form-control-sm border-0 bg-secondary text-dark fw-bold text-uppercase w-100" style="letter-spacing: 0.5px; background-color: #f8f9fa;" required>
                                                             </div>
                                                         </div>
                                                         
@@ -317,22 +469,21 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                 </div>
 
                                                 <div class="card-body bg-white border border-top-0 border-light p-3">
-                                                    
-                                                    <ul class="nav nav-tabs border-bottom mb-3" role="tablist">
+                                                    <ul class="nav nav-tabs border-bottom mb-3 nav-tabs-scroll" role="tablist">
                                                         <?php 
                                                         $vIndex = 0;
                                                         foreach($datos['variantes'] as $color_id => $var): 
                                                             $isActive = ($vIndex == 0) ? 'active' : '';
                                                         ?>
-                                                        <li class="nav-item" role="presentation">
-                                                            <button class="nav-link text-uppercase <?= $isActive ?>" data-bs-toggle="tab" data-bs-target="#variante-<?= $id ?>-<?= $color_id ?>" type="button" role="tab">
+                                                        <li class="nav-item flex-shrink-0" role="presentation">
+                                                            <button class="nav-link text-dark text-uppercase <?= $isActive ?>" data-bs-toggle="tab" data-bs-target="#variante-<?= $id ?>-<?= $color_id ?>" type="button" role="tab">
                                                                 <i class="bi bi-tag-fill me-1"></i> <?= htmlspecialchars($var['equipacion']) ?>
                                                             </button>
                                                         </li>
                                                         <?php $vIndex++; endforeach; ?>
                                                         
-                                                        <li class="nav-item ms-auto">
-                                                            <button type="button" class="btn btn-sm btn-warning fw-bold text-dark mt-1" data-bs-toggle="modal" data-bs-target="#modalVariante<?= $id ?>">
+                                                        <li class="nav-item ms-lg-auto flex-shrink-0">
+                                                            <button type="button" class="btn btn-sm btn-warning fw-bold text-dark mt-1 mx-2" data-bs-toggle="modal" data-bs-target="#modalVariante<?= $id ?>">
                                                                 <i class="bi bi-plus-circle-fill"></i> Añadir Variante
                                                             </button>
                                                         </li>
@@ -349,7 +500,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                             $fotosProducto = $stmtFotos->fetchAll(PDO::FETCH_ASSOC);
                                                         ?>
                                                         <div class="tab-pane fade <?= $isActive ?>" id="variante-<?= $id ?>-<?= $color_id ?>" role="tabpanel">
-                                                            <div class="d-flex flex-wrap align-items-center bg-light p-3 rounded">
+                                                            <div class="d-flex flex-wrap align-items-center bg-light p-3 rounded border border-light">
                                                                 <?php foreach ($fotosProducto as $ft) { ?>
                                                                     <div class="crm-thumb-container">
                                                                         <img src="../<?= htmlspecialchars($ft['url_imagen']); ?>" class="crm-thumb shadow-sm">
@@ -358,7 +509,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                                 <?php } ?>
                                                                 
                                                                 <button type="button" class="btn btn-outline-secondary border-dashed ms-2 bg-white shadow-sm" style="height: 65px; width: 65px; border-style: dashed; border-width: 2px;" onclick="document.getElementById('add-foto-input-<?= $id ?>-<?= $color_id ?>').click();" title="Añadir foto">
-                                                                    <i class="bi bi-plus-lg fs-4"></i>
+                                                                    <i class="bi bi-plus-lg fs-4 text-dark"></i>
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -366,18 +517,6 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            <div class="modal fade" id="modalVariante<?php echo $id; ?>" tabindex="-1">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content border-dark rounded-0 shadow-lg">
-                                                        <div class="modal-header bg-warning text-dark rounded-0">
-                                                            <h5 class="modal-title fw-bold text-uppercase"><i class="bi bi-plus-circle-fill me-2"></i>Añadir Nueva Variante</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                        </div>
-                                                        </div>
-                                                </div>
-                                            </div>
-                                            
                                         <?php } ?>
                                     <?php } ?>
 
@@ -396,12 +535,12 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                     </div>
 
                                     <div class="btn-flotante-guardar d-none d-md-block">
-                                        <button type="submit" class="btn btn-dark btn-lg shadow-lg fw-bold px-5 py-3 rounded-pill border border-2 border-light text-uppercase ls-1">
+                                        <button type="submit" form="formMasivo" class="btn btn-dark btn-lg shadow-lg fw-bold px-5 py-3 rounded-pill border border-2 border-light text-uppercase ls-1">
                                             <i class="bi bi-save-fill fs-5 me-2"></i> Guardar Cambios
                                         </button>
                                     </div>
-                                    <div class="d-block d-md-none position-fixed bottom-0 start-0 w-100 p-3 bg-white border-top shadow-lg" style="z-index: 9999;">
-                                        <button type="submit" class="btn btn-dark btn-lg shadow fw-bold w-100 text-uppercase">
+                                    <div class="btn-flotante-movil d-block d-md-none">
+                                        <button type="submit" form="formMasivo" class="btn btn-dark btn-lg shadow fw-bold w-100 text-uppercase">
                                             <i class="bi bi-save-fill me-2"></i> Guardar Cambios
                                         </button>
                                     </div>
@@ -455,11 +594,74 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                         </div>
                                     </div>
                                     <script>
-                                        // Truco JS para inyectar el form en el modal sin romper el form masivo exterior
                                         document.getElementById('modalVariante<?= $id ?>').querySelector('.modal-content').innerHTML += document.getElementById('form-variante-<?= $id ?>').innerHTML;
                                     </script>
                                 <?php } ?>
 
+                        <?php break; ?>
+                        
+                            case 'colecciones':
+                                $todasLasColecciones = $producto->listarColecciones(true);
+                        ?>
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h3>Gestión de Ligas / Categorías</h3>
+                                    <button class="btn btn-admin-black px-3 py-2" type="button" data-bs-toggle="collapse" data-bs-target="#formNuevaColeccion">
+                                        <i class="bi bi-plus-lg me-2"></i> Nueva Categoría
+                                    </button>
+                                </div>
+
+                                <div class="collapse mb-4" id="formNuevaColeccion">
+                                    <div class="card card-body admin-card border-0 shadow-sm bg-light">
+                                        <form action="../controllers/adminController.php" method="POST" class="row g-3 align-items-end">
+                                            <input type="hidden" name="accion" value="crearColeccion">
+                                            <div class="col-12 col-md-4">
+                                                <label class="fw-bold mb-1 small text-uppercase">Nombre de la Categoría:</label>
+                                                <input type="text" name="nombre_coleccion" class="form-control border-dark" placeholder="Ej: Premier League" required>
+                                            </div>
+                                            <div class="col-12 col-md-6">
+                                                <label class="fw-bold mb-1 small text-uppercase">Descripción:</label>
+                                                <textarea name="descripcion_coleccion" class="form-control border-dark" rows="1"></textarea>
+                                            </div>
+                                            <div class="col-12 col-md-2">
+                                                <button type="submit" class="btn btn-dark w-100 fw-bold">Crear Categoría</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <div class="table-responsive bg-white p-3 admin-card shadow-sm">
+                                    <table class="table admin-table table-hover align-middle">
+                                        <thead class="table-dark text-center">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Nombre Categoría</th>
+                                                <th>Descripción</th>
+                                                <th>Estado</th>
+                                                <th>Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($todasLasColecciones as $col) { ?>
+                                                <tr>
+                                                    <form action="../controllers/adminController.php" method="POST">
+                                                        <input type="hidden" name="accion" value="actualizarColeccion">
+                                                        <input type="hidden" name="id_coleccion" value="<?php echo $col['id']; ?>">
+                                                        <td class="text-center text-secondary fw-bold">#<?php echo $col['id']; ?></td>
+                                                        <td><input type="text" name="nombre" value="<?php echo htmlspecialchars($col['nombre']); ?>" class="form-control form-control-sm fw-bold border-dark"></td>
+                                                        <td><textarea name="descripcion" class="form-control form-control-sm border-dark" rows="1"><?php echo htmlspecialchars($col['descripcion'] ?? ''); ?></textarea></td>
+                                                        <td>
+                                                            <select name="nuevo_estado" class="form-select form-select-sm border-dark">
+                                                                <option value="1" <?php echo ($col['activa'] == 1 ? 'selected' : ''); ?>>Activa</option>
+                                                                <option value="2" <?php echo ($col['activa'] == 2 ? 'selected' : ''); ?>>Inactiva</option>
+                                                            </select>
+                                                        </td>
+                                                        <td class="text-center"><button type="submit" class="btn btn-sm btn-dark"><i class="bi bi-check-lg"></i></button></td>
+                                                    </form>
+                                                </tr>
+                                            <?php } ?>
+                                        </tbody>
+                                    </table>
+                                </div>
                         <?php break; ?>
                         <?php } ?>
                     </div>
@@ -470,7 +672,6 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Sistema Dropzone (El que ya funcionaba perfecto)
         document.addEventListener("DOMContentLoaded", function() {
             const dropZone = document.getElementById('drop-zone');
             if (!dropZone) return;
