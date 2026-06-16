@@ -2,7 +2,6 @@
 require_once 'controllers/carritoController.php';
 include './includes/header.php';
 ?>
-
 <main class="container my-5 py-5 mt-5" style="min-height: 60vh;">
     <div class="row mb-4">
         <div class="col-12">
@@ -10,8 +9,10 @@ include './includes/header.php';
             <p class="text-muted">
                 <?php
                 $numArticulos = 0;
+                $subtotalCarrito = 0;
                 foreach ($carritoDetallado as $it) {
                     $numArticulos += $it['cantidad'];
+                    $subtotalCarrito += $it['subtotal'];
                 }
                 echo $numArticulos;
                 ?> artículo(s) seleccionados
@@ -51,6 +52,14 @@ include './includes/header.php';
                                             </a>
                                         </h5>
                                         <p class="text-muted small mb-1">Color: <?php echo $item['color_nombre']; ?> | Talla: <?php echo $item['talla']; ?></p>
+                                        
+                                        <!-- Pintamos los EXTRAS si los tiene -->
+                                        <ul class="list-unstyled mt-1 mb-0 small text-muted fst-italic">
+                                            <?php if ($item['extra_player']): ?><li>+ Versión Player</li><?php endif; ?>
+                                            <?php if ($item['extra_pantalon']): ?><li>+ Pantalón a juego</li><?php endif; ?>
+                                            <?php if ($item['tiene_parche']): ?><li>+ Parches: <?= htmlspecialchars($item['texto_parche']) ?></li><?php endif; ?>
+                                            <?php if ($item['tiene_personalizacion']): ?><li>+ Nombre: <?= htmlspecialchars($item['texto_nombre']) ?> | Nº: <?= htmlspecialchars($item['texto_numero']) ?></li><?php endif; ?>
+                                        </ul>
                                     </div>
                                     
                                     <div class="text-end d-none d-md-block">
@@ -60,9 +69,6 @@ include './includes/header.php';
                                             <div class="mt-1"><span class="badge bg-danger">-<?php echo $item['rebaja']; ?>%</span></div>
                                         <?php } else{ ?>
                                             <span class="fw-bold fs-5"><?php echo number_format($item['subtotal'], 2); ?> €</span>
-                                        <?php } ?>
-                                        <?php if ($item['cantidad'] > 1){ ?>
-                                            <br><span class="text-muted small">(<?php echo $item['precio']; ?> €/u)</span>
                                         <?php } ?>
                                     </div>
                                 </div>
@@ -82,15 +88,9 @@ include './includes/header.php';
                                     </div>
                                     
                                     <div class="text-end d-block d-md-none">
-                                        <?php if ($item['rebaja'] > 0){ ?>
-                                            <span class="text-muted text-decoration-line-through small d-block" style="font-size: 0.75rem;"><?php echo number_format($item['precio_original'] * $item['cantidad'], 2); ?> €</span>
-                                            <span class="fw-bold fs-6 text-danger"><?php echo number_format($item['subtotal'], 2); ?> €</span>
-                                        <?php } else{ ?>
-                                            <span class="fw-bold fs-6"><?php echo number_format($item['subtotal'], 2); ?> €</span>
-                                        <?php } ?>
+                                        <span class="fw-bold fs-6"><?php echo number_format($item['subtotal'], 2); ?> €</span>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -101,29 +101,57 @@ include './includes/header.php';
                 <div class="card border-0 shadow-sm rounded-0 p-4 bg-light">
                     <h4 class="fw-bold text-uppercase mb-4">Resumen</h4>
 
+                    <?php
+                    // -------- LÓGICA DROPSHIPPING ---------
+                    // 1. Envío
+                    $envio = 0;
+                    if ($numArticulos == 1) $envio = 5.00;
+                    elseif ($numArticulos == 2) $envio = 4.00;
+                    elseif ($numArticulos == 3) $envio = 3.00;
+                    elseif ($numArticulos == 4) $envio = 2.00;
+                    else $envio = 0.00; // GRATIS
+
+                    // 2. Descuentos Automáticos
+                    $porcentajeAuto = 0;
+                    if ($numArticulos >= 5 || $subtotalCarrito > 120) {
+                        $porcentajeAuto = 15;
+                    } elseif ($numArticulos > 3 || $subtotalCarrito > 75) {
+                        $porcentajeAuto = 10;
+                    }
+
+                    // 3. Descuento del Código Promocional
+                    $porcentajeManual = isset($_SESSION['descuento']) ? (int)$_SESSION['descuento']['porcentaje'] : 0;
+
+                    // Nos quedamos siempre con el MAYOR descuento
+                    $porcentajeFinal = max($porcentajeAuto, $porcentajeManual);
+                    $descuentoCantidad = $subtotalCarrito * ($porcentajeFinal / 100);
+
+                    // 4. Total Final
+                    $totalFinal = ($subtotalCarrito - $descuentoCantidad) + $envio;
+                    ?>
+
                     <div class="d-flex justify-content-between mb-3 text-muted">
-                        <span>Subtotal</span>
-                        <span><?php echo number_format($totalCarrito, 2); ?> €</span>
+                        <span>Subtotal (<?= $numArticulos ?> prendas)</span>
+                        <span><?php echo number_format($subtotalCarrito, 2); ?> €</span>
                     </div>
+
                     <div class="d-flex justify-content-between mb-3 text-muted border-bottom pb-3">
                         <span>Gastos de envío</span>
-                        <span>4.99</span>
+                        <?php if($envio == 0): ?>
+                            <span class="text-success fw-bold">GRATIS</span>
+                        <?php else: ?>
+                            <span><?php echo number_format($envio, 2); ?> €</span>
+                        <?php endif; ?>
                     </div>
 
-
-
-                    <div class="mb-4 p-3 bg-light border border-dark">
+                    <div class="mb-4 p-3 bg-white border border-dark">
                         <label class="form-label fw-bold text-uppercase small" style="letter-spacing: 1px;">¿Tienes un código de descuento?</label>
-
                         <?php if (isset($_GET['error'])){ ?>
                             <div class="alert alert-danger py-2 rounded-0 small fw-bold mb-3 border-2 border-danger">
                                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                                 <?php
-                                if ($_GET['error'] == 'no_sesion') {
-                                    echo 'Debes iniciar sesión para usar un código.';
-                                } elseif ($_GET['error'] == 'codigo_invalido') {
-                                    echo 'El código no existe, está caducado o no está vinculado a tu correo.';
-                                }
+                                if ($_GET['error'] == 'no_sesion') echo 'Debes iniciar sesión para usar un código.';
+                                elseif ($_GET['error'] == 'codigo_invalido') echo 'El código no existe, está caducado o no aplica.';
                                 ?>
                             </div>
                         <?php }; ?>
@@ -133,52 +161,40 @@ include './includes/header.php';
                                 <span><i class="bi bi-tag-fill me-2"></i> Código <strong><?= $_SESSION['descuento']['codigo'] ?></strong> (-<?= $_SESSION['descuento']['porcentaje'] ?>%)</span>
                                 <a href="controllers/carritoController.php?accion=quitar_descuento" class="text-danger text-decoration-none" title="Quitar descuento"><i class="bi bi-x-lg"></i></a>
                             </div>
-                        <?php }else { ?>
+                        <?php } else { ?>
                             <form action="controllers/carritoController.php" method="POST" class="m-0">
                                 <input type="hidden" name="accion" value="aplicar_descuento">
                                 <div class="input-group">
-                                    <input type="text" name="codigo_descuento" class="form-control rounded-0 text-uppercase" placeholder="Tu código" required>
+                                    <input type="text" name="codigo_descuento" class="form-control rounded-0 text-uppercase border-dark" placeholder="Tu código" required>
                                     <button type="submit" class="btn btn-dark rounded-0 text-uppercase fw-bold">Aplicar</button>
                                 </div>
                             </form>
                         <?php }; ?>
                     </div>
 
-
-                    <?php
-                    $descuentoCantidad = 0;
-                    if (isset($_SESSION['descuento'])) {
-                        $porcentaje = $_SESSION['descuento']['porcentaje'];
-                        $descuentoCantidad = $totalCarrito * ($porcentaje / 100);
-                    }
-
-                    $envio = ($totalCarrito > 50) ? 0 : 4.99;
-
-                    $totalFinal = ($totalCarrito - $descuentoCantidad) + $envio;
-                    ?>
-
-                    <div class="d-flex justify-content-between mb-4 mt-3">
-                        <span class="fw-bold text-uppercase">Total</span>
-                        <span class="fw-bold fs-4"><?php echo number_format($totalFinal, 2); ?> €</span>
-                    </div>
-                    <?php if ($descuentoCantidad > 0) { ?>
-                        <div class="d-flex justify-content-between mb-2 text-danger fw-bold">
-                            <span>Descuento (<?= $_SESSION['descuento']['porcentaje'] ?>%)</span>
+                    <?php if ($porcentajeFinal > 0) { ?>
+                        <div class="d-flex justify-content-between mb-2 text-danger fw-bold bg-danger bg-opacity-10 p-2">
+                            <?php if ($porcentajeFinal == $porcentajeAuto): ?>
+                                <span>Descuento Volumen Automático (-<?= $porcentajeFinal ?>%)</span>
+                            <?php else: ?>
+                                <span>Cupón de Descuento (-<?= $porcentajeFinal ?>%)</span>
+                            <?php endif; ?>
                             <span>-<?= number_format($descuentoCantidad, 2) ?> €</span>
                         </div>
                     <?php }; ?>
 
+                    <div class="d-flex justify-content-between mb-4 mt-3 border-top border-dark pt-3">
+                        <span class="fw-bold text-uppercase fs-5">Total</span>
+                        <span class="fw-bold fs-3"><?php echo number_format($totalFinal, 2); ?> €</span>
+                    </div>
+
                     <?php
-
                     $urlCorrecta = (isset($_SESSION["usuario_id"])) ? "checkout.php" : "index.php?mensaje=login_requerido";
-
                     ?>
-
                     <a href="<?php echo $urlCorrecta ?>" class="btn btn-dark rounded-0 py-3 text-uppercase fw-bold w-100 ls-1">Tramitar Pedido</a>
                 </div>
             </div>
         </div>
     <?php endif; ?>
 </main>
-
 <?php include './includes/footer.php'; ?>

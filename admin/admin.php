@@ -216,6 +216,9 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                     <div class="col-12">
                         <?php
                         switch ($seccion) {
+                            // =========================================================
+                            // SECCIÓN DE PEDIDOS MEJORADA CON DETALLES DE PREPARACIÓN
+                            // =========================================================
                             case 'pedidos':
                                 $listaPedidos = $pedido->listarPedidos();
                         ?>
@@ -233,24 +236,26 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                 <th>Fecha</th>
                                                 <th>Total</th>
                                                 <th>Estado</th>
-                                                <th>Acciones de Envío</th>
+                                                <th>Detalles Pedido</th>
+                                                <th>Acciones Envío</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php foreach ($listaPedidos as $p) { 
                                                 $datosCliente = $usu->obtenerDatosUsu($p['usuario_id']);
-                                                $direccionCompleta = ($datosCliente['direccion'] ?? 'No definida') . ', ' . ($datosCliente['ciudad'] ?? '') . ' (' . ($datosCliente['codigo_postal'] ?? '') . ')';
+                                                // La dirección la cogemos primero del pedido (Checkout), y si no, del perfil (por si es un pedido antiguo)
+                                                $direccionCompleta = !empty($p['direccion_envio']) ? $p['direccion_envio'] : (($datosCliente['direccion'] ?? 'No definida') . ', ' . ($datosCliente['ciudad'] ?? '') . ' (' . ($datosCliente['codigo_postal'] ?? '') . ')');
                                             ?>
                                                 <tr>
                                                     <td class="fw-bold">#<?php echo $p['id']; ?></td>
-                                                    <td><?php echo $p['nombre_cliente']; ?></td>
+                                                    <td><?php echo htmlspecialchars($p['nombre_cliente']); ?></td>
                                                     <td><?php echo date('d/m/Y H:i', strtotime($p['fecha'])); ?></td>
-                                                    <td><?php echo number_format($p['total'], 2); ?> €</td>
+                                                    <td class="fw-bold"><?php echo number_format($p['total'], 2); ?> €</td>
                                                     <td>
                                                         <form action="../controllers/adminController.php" method="POST" class="d-flex gap-2 m-0">
                                                             <input type="hidden" name="accion" value="cambiarEstadoPedido">
                                                             <input type="hidden" name="idPedido" value="<?php echo $p['id']; ?>">
-                                                            <select name="nuevoEstado" class="form-select form-select-sm" style="width: auto;">
+                                                            <select name="nuevoEstado" class="form-select form-select-sm fw-bold" style="width: auto;">
                                                                 <?php
                                                                 $estadosPosibles = ['pendiente', 'pagado', 'enviado', 'entregado', 'cancelado'];
                                                                 foreach ($estadosPosibles as $estado) {
@@ -262,13 +267,87 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                             <button type="submit" class="btn btn-sm btn-dark">Actualizar</button>
                                                         </form>
                                                     </td>
+                                                    
+                                                    <!-- BOTÓN NUEVO DE PREPARACIÓN DE PEDIDO -->
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-dark fw-bold" data-bs-toggle="modal" data-bs-target="#modalDetalles<?php echo $p['id']; ?>">
+                                                            <i class="bi bi-card-list me-1"></i> Ver Pedido
+                                                        </button>
+                                                    </td>
+                                                    
                                                     <td>
                                                         <button class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#modalTracking<?php echo $p['id']; ?>">
-                                                            <i class="bi bi-truck me-1"></i> Enviar Seguimiento
+                                                            <i class="bi bi-truck me-1"></i> Seguimiento
                                                         </button>
                                                     </td>
                                                 </tr>
 
+                                                <!-- MODAL DE PREPARACIÓN DE PEDIDO (EL NUEVO) -->
+                                                <div class="modal fade" id="modalDetalles<?php echo $p['id']; ?>" tabindex="-1" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                                                        <div class="modal-content rounded-0 border-dark shadow-lg">
+                                                            <div class="modal-header bg-dark text-white rounded-0">
+                                                                <h5 class="modal-title text-uppercase fw-bold"><i class="bi bi-box-seam me-2"></i>Preparar Pedido #<?php echo str_pad($p['id'], 5, "0", STR_PAD_LEFT); ?></h5>
+                                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <div class="modal-body p-4 bg-light">
+                                                                
+                                                                <!-- Fila de Datos del Cliente y Envío -->
+                                                                <div class="row mb-4 bg-white p-3 border border-secondary shadow-sm">
+                                                                    <div class="col-md-6 mb-3 mb-md-0 border-end border-secondary">
+                                                                        <h6 class="fw-bold text-uppercase text-muted small mb-2"><i class="bi bi-person-fill me-1"></i>Contacto Cliente</h6>
+                                                                        <p class="mb-0 fw-bold fs-6"><?php echo htmlspecialchars($p['nombre_cliente']); ?></p>
+                                                                        <p class="mb-0 small"><a href="mailto:<?php echo htmlspecialchars($datosCliente['email']); ?>" class="text-decoration-none text-dark"><?php echo htmlspecialchars($datosCliente['email']); ?></a></p>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <h6 class="fw-bold text-uppercase text-muted small mb-2"><i class="bi bi-geo-alt-fill me-1"></i>Dirección de Entrega</h6>
+                                                                        <p class="mb-0 small fw-bold" style="line-height: 1.6;"><?php echo htmlspecialchars($direccionCompleta); ?></p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Fila de Artículos -->
+                                                                <h6 class="fw-bold text-uppercase border-bottom border-dark border-2 pb-2 mb-3 mt-4">Artículos a preparar:</h6>
+                                                                <ul class="list-group list-group-flush rounded-0 shadow-sm border border-secondary">
+                                                                    <?php
+                                                                    $lineas = $pedido->obtenerInfoPedido($p['id']);
+                                                                    foreach ($lineas as $linea) {
+                                                                        $fotoMuestra = !empty($linea['url_imagen']) ? '../' . $linea['url_imagen'] : '../public/img/fondo.jpg';
+                                                                    ?>
+                                                                    <li class="list-group-item p-3 border-bottom border-secondary bg-white">
+                                                                        <div class="d-flex align-items-center">
+                                                                            <img src="<?php echo htmlspecialchars($fotoMuestra); ?>" class="me-3 border border-dark rounded-1" style="width: 80px; height: 80px; object-fit: cover;">
+                                                                            <div class="flex-grow-1">
+                                                                                <h6 class="fw-bold text-uppercase mb-2 fs-5">
+                                                                                    <span class="text-primary me-1"><?php echo $linea['cantidad']; ?>x</span> <?php echo htmlspecialchars($linea['producto_nombre']); ?>
+                                                                                </h6>
+                                                                                
+                                                                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                                                                    <span class="badge bg-dark rounded-0 px-2 py-1 fs-6">Talla: <?php echo htmlspecialchars($linea['talla'] ?? 'N/A'); ?></span>
+                                                                                    <span class="badge border border-dark text-dark rounded-0 px-2 py-1 fs-6">Color: <?php echo htmlspecialchars($linea['color_nombre'] ?? 'N/A'); ?></span>
+                                                                                </div>
+                                                                                
+                                                                                <?php if (!empty($linea['extras_texto'])): ?>
+                                                                                    <div class="mt-2 p-2 bg-danger bg-opacity-10 border border-danger border-opacity-50">
+                                                                                        <p class="mb-0 small text-danger fw-bold text-uppercase" style="letter-spacing: 0.5px;">
+                                                                                            <i class="bi bi-stars me-1"></i> EXTRAS SOLICITADOS:<br>
+                                                                                            <span class="text-dark fs-6 ms-3">→ <?php echo htmlspecialchars($linea['extras_texto']); ?></span>
+                                                                                        </p>
+                                                                                    </div>
+                                                                                <?php endif; ?>
+                                                                            </div>
+                                                                        </div>
+                                                                    </li>
+                                                                    <?php } ?>
+                                                                </ul>
+                                                            </div>
+                                                            <div class="modal-footer rounded-0 bg-white">
+                                                                <button type="button" class="btn btn-dark fw-bold text-uppercase px-4" data-bs-dismiss="modal">Cerrar Detalles</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- MODAL DE EMAIL DE SEGUIMIENTO (EL ORIGINAL) -->
                                                 <div class="modal fade" id="modalTracking<?php echo $p['id']; ?>" tabindex="-1" aria-hidden="true">
                                                     <div class="modal-dialog modal-dialog-centered">
                                                         <div class="modal-content rounded-0 border-dark">
@@ -301,7 +380,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                                 </div>
                                                                 <div class="modal-footer bg-light border-top rounded-0">
                                                                     <button type="button" class="btn btn-secondary rounded-0 btn-sm fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                                                                    <button type="submit" class="btn btn-dark rounded-0 btn-sm fw-bold"><i class="bi bi-send me-1"></i> Disparar Correo</button>
+                                                                    <button type="submit" class="btn btn-dark rounded-0 btn-sm fw-bold"><i class="bi bi-send me-1"></i> Enviar Correo</button>
                                                                 </div>
                                                             </form>
                                                         </div>
@@ -314,6 +393,9 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                         <?php
                                 break;
 
+                            // =========================================================
+                            // SECCIÓN DE PRODUCTOS (INVENTARIO MASIVO)
+                            // =========================================================
                             case 'productos':
                                 $prod = new Producto($db->conectar());
 
@@ -338,7 +420,8 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                 'rebaja' => $item['rebaja'],
                                                 'activo' => $item['activo'],
                                                 'coleccion_id' => $item['coleccion_id'],
-                                                'es_segunda_mano' => $item['es_segunda_mano']
+                                                'es_segunda_mano' => $item['es_segunda_mano'],
+                                                'descripcion' => $item['descripcion'] ?? '' 
                                             ];
                                         }
                                     }
@@ -367,7 +450,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                             </div>
                                             <div class="col-6 col-md-2">
                                                 <label class="fw-bold small">Precio Base (€):</label>
-                                                <input type="number" step="0.01" name="precio" class="form-control border-dark" value="19.00" required>
+                                                <input type="number" step="0.01" name="precio" class="form-control border-dark" value="17.00" required>
                                             </div>
                                             <div class="col-6 col-md-3">
                                                 <label class="fw-bold small">Equipación:</label>
@@ -419,12 +502,10 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                         <?php foreach ($productosAgrupados as $id => $datos) { 
                                             if ($datos['es_segunda_mano'] == 1) continue;
 
-                                            // CONSULTA DE SEGURIDAD PARA SACAR LAS FOTOS DIRECTAMENTE DE LA BD
                                             $stmtFotos = $conexion->prepare("SELECT id, url_imagen FROM imagenes_productos WHERE producto_id = ?");
                                             $stmtFotos->execute([$id]);
                                             $fotosProducto = $stmtFotos->fetchAll(PDO::FETCH_ASSOC);
 
-                                            // CONSULTA DE SEGURIDAD PARA TRAER LA DESCRIPCIÓN EXACTA DE LA BD
                                             $stmtDesc = $conexion->prepare("SELECT descripcion FROM productos WHERE id = ?");
                                             $stmtDesc->execute([$id]);
                                             $descReal = $stmtDesc->fetchColumn();
@@ -545,6 +626,10 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
 
                         <?php
                                 break;
+
+                            // =========================================================
+                            // SECCIÓN DE CATEGORÍAS (LIGAS)
+                            // =========================================================
                             case 'colecciones':
                                 $todasLasColecciones = $producto->listarColecciones(true);
                         ?>

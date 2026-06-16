@@ -16,19 +16,12 @@ $usuarioModel = new Usuario($conexion);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion']) && $_POST['accion'] == 'aplicar_descuento') {
     $codigo = strtoupper(trim($_POST['codigo_descuento']));
-    
     if (isset($_SESSION['usuario_id'])) {
         $datosUsuario = $usuarioModel->obtenerDatosUsu($_SESSION['usuario_id']);
         $emailUsuario = trim($datosUsuario['email']);
-
-
         $datosCodigo = $productoModel->verificarCodigoDescuento($codigo, $emailUsuario); 
-
         if ($datosCodigo) {
-            $_SESSION['descuento'] = [
-                'codigo' => $codigo,
-                'porcentaje' => $datosCodigo['porcentaje_descuento']
-            ];
+            $_SESSION['descuento'] = ['codigo' => $codigo, 'porcentaje' => $datosCodigo['porcentaje_descuento']];
             header("Location: ../carrito.php?mensaje=codigo_aplicado");
         } else {
             header("Location: ../carrito.php?error=codigo_invalido");
@@ -50,31 +43,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion']) && $_POST['a
     $idPrenda = $_POST['idPrenda'];
     $color_id = isset($_POST['color_id']) ? $_POST['color_id'] : (isset($_POST['color']) ? $_POST['color'] : '');
     $cantidad = 1;
-    
     $origen = isset($_POST['origen']) ? $_POST['origen'] : 'ficha';
 
-    if (!isset($_POST['talla']) || empty($_POST['talla'])) {
-        if ($origen === 'segundaMano') {
-            header("Location: ../segundaMano.php?error=falta_talla");
-        } else {
-            header("Location: ../fichaProducto.php?idPrenda=" . $idPrenda . "&color=" . $color_id . "&error=falta_talla");
-        }
-        exit;
-    }
-    
-    $talla = $_POST['talla'];
+    // Recogemos todos los extras del dropshipping
+    $talla = $_POST['talla'] ?? '';
+    $extra_player = isset($_POST['extra_player']) ? 1 : 0;
+    $extra_pantalon = isset($_POST['extra_pantalon']) ? 1 : 0;
+    $tiene_parche = isset($_POST['tiene_parche']) ? 1 : 0;
+    $texto_parche = $tiene_parche ? trim($_POST['texto_parche']) : '';
+    $tiene_personalizacion = isset($_POST['tiene_personalizacion']) ? 1 : 0;
+    $texto_nombre = $tiene_personalizacion ? trim($_POST['texto_nombre']) : '';
+    $texto_numero = $tiene_personalizacion ? trim($_POST['texto_numero']) : '';
 
-    $stmt = $conexion->prepare("SELECT stock FROM producto_tallas WHERE producto_id = ? AND color_id = ? AND talla = ?");
-    $stmt->execute([$idPrenda, $color_id, $talla]);
-    $resultadoStock = $stmt->fetch(PDO::FETCH_ASSOC);
-    $stockMaximo = $resultadoStock ? $resultadoStock['stock'] : 0;
-
-    if ($stockMaximo < 1) {
-        if ($origen === 'segundaMano') {
-            header("Location: ../segundaMano.php?error=no_stock");
-        } else {
-            header("Location: ../fichaProducto.php?idPrenda=" . $idPrenda . "&color=" . $color_id . "&error=no_stock");
-        }
+    if (empty($talla)) {
+        header("Location: ../fichaProducto.php?idPrenda=" . $idPrenda . "&color=" . $color_id . "&error=falta_talla");
         exit;
     }
 
@@ -84,17 +66,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion']) && $_POST['a
 
     $productoEncontrado = false;
     foreach ($_SESSION['carrito'] as &$item) {
-        if ($item['idPrenda'] == $idPrenda && $item['talla'] == $talla && $item['color_id'] == $color_id) {
-            
-            if ($item['cantidad'] + $cantidad > $stockMaximo) {
-                if ($origen === 'segundaMano') {
-                    header("Location: ../segundaMano.php?error=no_stock");
-                } else {
-                    header("Location: ../fichaProducto.php?idPrenda=" . $idPrenda . "&color=" . $color_id . "&error=no_stock");
-                }
-                exit;
-            }
-            
+        // Agrupamos en la misma línea del carrito SÓLO si todo (talla, color y todos los extras) es exactamente igual
+        if ($item['idPrenda'] == $idPrenda && $item['talla'] == $talla && $item['color_id'] == $color_id &&
+            ($item['extra_player'] ?? 0) == $extra_player &&
+            ($item['extra_pantalon'] ?? 0) == $extra_pantalon &&
+            ($item['tiene_parche'] ?? 0) == $tiene_parche &&
+            ($item['texto_parche'] ?? '') == $texto_parche &&
+            ($item['tiene_personalizacion'] ?? 0) == $tiene_personalizacion &&
+            ($item['texto_nombre'] ?? '') == $texto_nombre &&
+            ($item['texto_numero'] ?? '') == $texto_numero
+        ) {
             $item['cantidad'] += $cantidad;
             $productoEncontrado = true;
             break;
@@ -106,15 +87,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion']) && $_POST['a
             'idPrenda' => $idPrenda,
             'talla' => $talla,
             'color_id' => $color_id,
-            'cantidad' => $cantidad
+            'cantidad' => $cantidad,
+            'extra_player' => $extra_player,
+            'extra_pantalon' => $extra_pantalon,
+            'tiene_parche' => $tiene_parche,
+            'texto_parche' => $texto_parche,
+            'tiene_personalizacion' => $tiene_personalizacion,
+            'texto_nombre' => $texto_nombre,
+            'texto_numero' => $texto_numero
         ];
     }
 
-    if ($origen === 'segundaMano') {
-        header("Location: ../segundaMano.php?mensaje=agregado");
-    } else {
-        header("Location: ../fichaProducto.php?idPrenda=" . $idPrenda . "&color=" . $color_id );
-    }
+    header("Location: ../fichaProducto.php?idPrenda=" . $idPrenda . "&color=" . $color_id );
     exit;
 }
 
@@ -122,31 +106,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['accion']) && isset($_GET
     $indice = (int)$_GET['indice'];
 
     if (isset($_SESSION['carrito'][$indice])) {
+        // Ya no hay bloqueo de stock
         if ($_GET['accion'] == 'sumar') {
-            
-            $item = $_SESSION['carrito'][$indice];
-            
-            $stmt = $conexion->prepare("SELECT stock FROM producto_tallas WHERE producto_id = ? AND color_id = ? AND talla = ?");
-            $stmt->execute([$item['idPrenda'], $item['color_id'], $item['talla']]);
-            $resultadoStock = $stmt->fetch(PDO::FETCH_ASSOC);
-            $stockMaximo = $resultadoStock ? $resultadoStock['stock'] : 0;
-
-            if ($item['cantidad'] < $stockMaximo) {
-                $_SESSION['carrito'][$indice]['cantidad']++;
-            } else {
-                header("Location: ../carrito.php?error=no_stock");
-                exit;
-            }
-
+            $_SESSION['carrito'][$indice]['cantidad']++;
         } elseif ($_GET['accion'] == 'restar') {
             $_SESSION['carrito'][$indice]['cantidad']--;
-            if ($_SESSION['carrito'][$indice]['cantidad'] <= 0) {
-                unset($_SESSION['carrito'][$indice]);
-            }
+            if ($_SESSION['carrito'][$indice]['cantidad'] <= 0) unset($_SESSION['carrito'][$indice]);
         } elseif ($_GET['accion'] == 'eliminar') {
             unset($_SESSION['carrito'][$indice]);
         }
-
         $_SESSION['carrito'] = array_values($_SESSION['carrito']);
     }
 
@@ -160,23 +128,28 @@ $totalCarrito = 0;
 
 foreach ($carritoActual as $indice => $item) {
     $datosProd = $productoModel->obtenerProducto($item['idPrenda']);
-    
     $imagenesColor = $imagenModel->listarImagenesPorColor($item['idPrenda'], $item['color_id']);
     $foto = !empty($imagenesColor) ? $imagenesColor[0]['url_imagen'] : 'public/img/fondo.jpg';
     
     $coloresProducto = $productoModel->obtenerColoresPorProducto($item['idPrenda']);
     $nombreColor = "Color";
     foreach($coloresProducto as $cp) {
-        if($cp['id'] == $item['color_id']) {
-            $nombreColor = $cp['nombre'];
-            break;
-        }
+        if($cp['id'] == $item['color_id']) { $nombreColor = $cp['nombre']; break; }
     }
 
     $rebaja = isset($datosProd['rebaja']) ? (int)$datosProd['rebaja'] : 0;
-    $precioUnitario = $datosProd['precio'] - ($datosProd['precio'] * $rebaja / 100);
+    $precioBaseRebajado = $datosProd['precio'] - ($datosProd['precio'] * $rebaja / 100);
 
-    $subtotal = $precioUnitario * $item['cantidad'];
+    // Sumar los costes extra al precio unitario real que pagará el cliente
+    $extraPrecio = 0;
+    if (!empty($item['extra_player'])) $extraPrecio += 3;
+    if (!empty($item['extra_pantalon'])) $extraPrecio += 10;
+    if (!empty($item['tiene_parche'])) $extraPrecio += 1;
+    if (!empty($item['tiene_personalizacion'])) $extraPrecio += 2;
+    if (in_array($item['talla'], ['2XL', '3XL', '4XL'])) $extraPrecio += 1;
+
+    $precioUnitarioFinal = $precioBaseRebajado + $extraPrecio;
+    $subtotal = $precioUnitarioFinal * $item['cantidad'];
     $totalCarrito += $subtotal;
 
     $carritoDetallado[] = [
@@ -190,7 +163,15 @@ foreach ($carritoActual as $indice => $item) {
         'color_nombre' => $nombreColor,
         'cantidad' => $item['cantidad'],
         'imagen' => $foto,
-        'subtotal' => $subtotal
+        'subtotal' => $subtotal,
+        // Pasamos también los extras a la vista para pintarlos en el Checkout si quieres luego
+        'extra_player' => $item['extra_player'] ?? 0,
+        'extra_pantalon' => $item['extra_pantalon'] ?? 0,
+        'tiene_parche' => $item['tiene_parche'] ?? 0,
+        'texto_parche' => $item['texto_parche'] ?? '',
+        'tiene_personalizacion' => $item['tiene_personalizacion'] ?? 0,
+        'texto_nombre' => $item['texto_nombre'] ?? '',
+        'texto_numero' => $item['texto_numero'] ?? ''
     ];
 }
 ?>
