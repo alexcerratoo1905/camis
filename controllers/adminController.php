@@ -24,8 +24,71 @@ if (!empty($accion)) {
     switch ($accion) {
         
         // ==============================================
-        // ACTUALIZACIÓN MASIVA DE INVENTARIO (CON NOMBRE Y DESCRIPCIÓN)
+        // AÑADIR UNA NUEVA EQUIPACIÓN (VARIANTE)
         // ==============================================
+        case 'anadirEquipacionExtra':
+            $producto_id = (int)$_POST['producto_id'];
+            $equipacion = $_POST['equipacion']; 
+            $paginaRetorno = (int)($_POST['pagina_retorno'] ?? 1);
+
+            try {
+                $conexion->beginTransaction();
+
+                // 1. Buscamos o creamos el Color
+                $stmtColor = $conexion->prepare("SELECT id FROM colores WHERE nombre = ?");
+                $stmtColor->execute([$equipacion]);
+                $colorRow = $stmtColor->fetch(PDO::FETCH_ASSOC);
+
+                if ($colorRow) {
+                    $color_id = $colorRow['id'];
+                } else {
+                    $stmtNuevoColor = $conexion->prepare("INSERT INTO colores (nombre, valor_hexadecimal) VALUES (?, '#000000')");
+                    $stmtNuevoColor->execute([$equipacion]);
+                    $color_id = $conexion->lastInsertId();
+                }
+
+                // 2. Vinculamos color al producto
+                $stmtLink = $conexion->prepare("INSERT IGNORE INTO producto_colores (producto_id, color_id) VALUES (?, ?)");
+                $stmtLink->execute([$producto_id, $color_id]);
+
+                // 3. ¡EL ARREGLO! Inyectar las tallas en la BBDD para que el producto no se oculte
+                $tallas = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
+                $stmtTalla = $conexion->prepare("INSERT IGNORE INTO producto_tallas (producto_id, color_id, talla, stock) VALUES (?, ?, ?, 0)");
+                foreach($tallas as $t) {
+                    $stmtTalla->execute([$producto_id, $color_id, $t]);
+                }
+
+                // 4. Subimos las fotos
+                if (isset($_FILES['imagenes']) && !empty($_FILES['imagenes']['name'][0])) {
+                    $totalImagenes = count($_FILES['imagenes']['name']);
+                    $rutaDirectorio = __DIR__ . '/../public/img/';
+                    
+                    for ($i = 0; $i < $totalImagenes; $i++) {
+                        if ($_FILES['imagenes']['error'][$i] === UPLOAD_ERR_OK) {
+                            $nombreOriginal = preg_replace("/[^a-zA-Z0-9.-]/", "_", basename($_FILES['imagenes']['name'][$i]));
+                            $nombreArchivo = time() . '_var_' . $i . '_' . $nombreOriginal;
+                            
+                            if (move_uploaded_file($_FILES['imagenes']['tmp_name'][$i], $rutaDirectorio . $nombreArchivo)) {
+                                $urlBD = 'public/img/' . $nombreArchivo;
+                                $es_principal = ($i === 0) ? 1 : 0;
+                                
+                                $stmtImg = $conexion->prepare("INSERT INTO imagenes_productos (producto_id, color_id, url_imagen, es_principal) VALUES (?, ?, ?, ?)");
+                                $stmtImg->execute([$producto_id, $color_id, $urlBD, $es_principal]);
+                            }
+                        }
+                    }
+                }
+
+                $conexion->commit();
+                header("Location: ../admin/admin.php?seccion=productos&pagina=$paginaRetorno&mensaje=variante_anadida");
+                exit();
+
+            } catch (Exception $e) {
+                $conexion->rollBack();
+                die("Error SQL: " . $e->getMessage());
+            }
+            break;
+
         case "actualizarInventarioMasivo":
             if ($_SERVER["REQUEST_METHOD"] !== "POST") exit();
             
@@ -47,7 +110,6 @@ if (!empty($accion)) {
                     $precioActualizado = $precios[$idPrenda] ?? 0.00;
                     $coleccionActualizada = !empty($colecciones[$idPrenda]) ? $colecciones[$idPrenda] : null; 
 
-                    // Ejecutamos la consulta directa unificada que machaca todas las columnas modificadas de golpe
                     $sqlUp = "UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, rebaja = ?, activo = ?, coleccion_id = ? WHERE id = ?";
                     $stmtUp = $conexion->prepare($sqlUp);
                     $stmtUp->execute([$nombreAct, $descAct, $precioActualizado, $valorRebaja, $estadoActivo, $coleccionActualizada, $idPrenda]);
@@ -58,13 +120,10 @@ if (!empty($accion)) {
                 exit();
             } catch (Exception $e) {
                 $conexion->rollBack();
-                die("Error crítico al procesar el inventario masivo: " . $e->getMessage());
+                die("Error crítico al procesar inventario: " . $e->getMessage());
             }
             break;
 
-        // ==============================================
-        // BORRAR UNA FOTO ESPECÍFICA DE LA GALERÍA
-        // ==============================================
         case 'borrarFotoEspecifica':
             $idFoto = (int)($_GET['id_foto'] ?? 0);
             $idProducto = (int)($_GET['p_id'] ?? 0);
@@ -78,9 +137,7 @@ if (!empty($accion)) {
 
                     if ($fotoData) {
                         $rutaFisica = __DIR__ . '/../' . $fotoData['url_imagen'];
-                        if (file_exists($rutaFisica)) {
-                            unlink($rutaFisica);
-                        }
+                        if (file_exists($rutaFisica)) unlink($rutaFisica);
                     }
 
                     $stmtDel = $conexion->prepare("DELETE FROM imagenes_productos WHERE id = ?");
@@ -96,26 +153,19 @@ if (!empty($accion)) {
             exit();
             break;
 
-        // ==============================================
-        // AÑADIR NUEVAS FOTOS A UNA PRENDA EXISTENTE
-        // ==============================================
         case 'anadirFotosGaleriaExistente':
             $idProducto = (int)($_POST['producto_id'] ?? 0);
+            $color_id = (int)($_POST['color_id'] ?? 1); 
             $paginaRetorno = (int)($_POST['pagina_retorno'] ?? 1);
 
             if ($idProducto > 0 && isset($_FILES['imagenes'])) {
                 try {
                     $conexion->beginTransaction();
                     
-                    $stmtCheck = $conexion->prepare("SELECT id FROM imagenes_productos WHERE producto_id = ? AND es_principal = 1");
-                    $stmtCheck->execute([$idProducto]);
+                    $stmtCheck = $conexion->prepare("SELECT id FROM imagenes_productos WHERE producto_id = ? AND color_id = ? AND es_principal = 1");
+                    $stmtCheck->execute([$idProducto, $color_id]);
                     $tienePrincipal = $stmtCheck->fetch(PDO::FETCH_ASSOC);
                     $es_principal = $tienePrincipal ? 0 : 1;
-
-                    $stmtColor = $conexion->prepare("SELECT color_id FROM producto_colores WHERE producto_id = ? LIMIT 1");
-                    $stmtColor->execute([$idProducto]);
-                    $colorRow = $stmtColor->fetch(PDO::FETCH_ASSOC);
-                    $color_id = $colorRow ? $colorRow['color_id'] : 1;
 
                     $totalImagenes = count($_FILES['imagenes']['name']);
                     $rutaDirectorio = __DIR__ . '/../public/img/';
@@ -127,14 +177,12 @@ if (!empty($accion)) {
                             
                             if (move_uploaded_file($_FILES['imagenes']['tmp_name'][$i], $rutaDirectorio . $nombreArchivo)) {
                                 $urlBD = 'public/img/' . $nombreArchivo;
-                                
                                 $stmtImg = $conexion->prepare("INSERT INTO imagenes_productos (producto_id, color_id, url_imagen, es_principal) VALUES (?, ?, ?, ?)");
                                 $stmtImg->execute([$idProducto, $color_id, $urlBD, $es_principal]);
                                 $es_principal = 0;
                             }
                         }
                     }
-
                     $conexion->commit();
                     header("Location: ../admin/admin.php?seccion=productos&pagina=$paginaRetorno&mensaje=fotos_anadidas");
                     exit();
@@ -147,9 +195,6 @@ if (!empty($accion)) {
             exit();
             break;
 
-        // ==============================================
-        // NUEVA SUBIDA DE CAMISETAS CON FOTOS FÍSICAS
-        // ==============================================
         case 'crearPrendaTienda':
             if ($_SERVER["REQUEST_METHOD"] !== "POST") exit();
             $nombre = trim($_POST['nombre']);
@@ -177,11 +222,17 @@ if (!empty($accion)) {
                                   VALUES (?, ?, ?, ?, 3, 1, 1)";
                 $stmtProd = $conexion->prepare($sqlInsertProd);
                 $stmtProd->execute([$nombre, $precio, $descripcion, $coleccion_id]);
-                
                 $producto_id = $conexion->lastInsertId();
 
                 $stmtProdColor = $conexion->prepare("INSERT INTO producto_colores (producto_id, color_id) VALUES (?, ?)");
                 $stmtProdColor->execute([$producto_id, $color_id]);
+
+                // ¡EL ARREGLO! Inyectar las tallas en la BBDD
+                $tallas = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
+                $stmtTalla = $conexion->prepare("INSERT IGNORE INTO producto_tallas (producto_id, color_id, talla, stock) VALUES (?, ?, ?, 0)");
+                foreach($tallas as $t) {
+                    $stmtTalla->execute([$producto_id, $color_id, $t]);
+                }
 
                 if (isset($_FILES['imagenes']) && !empty($_FILES['imagenes']['name'][0])) {
                     $totalImagenes = count($_FILES['imagenes']['name']);
@@ -216,30 +267,16 @@ if (!empty($accion)) {
 
         case "cambiarEstadoPedido":
             if ($_SERVER["REQUEST_METHOD"] !== "POST") exit();
-            if (!$esSuperAdmin) die("No tienes permisos para tocar pedidos.");
             $idPedido = isset($_POST["idPedido"]) ? $_POST["idPedido"] : 0;
             $nuevoEstado = isset($_POST["nuevoEstado"]) ? trim($_POST["nuevoEstado"]) : "";
             $pedido->actualizarEstadoPedido($idPedido, $nuevoEstado);
             header("Location: ../admin/admin.php?seccion=pedidos&mensaje=estado_actualizado");
-            break;
-
-        case "actualizarRol":
-            if ($_SERVER["REQUEST_METHOD"] !== "POST") exit();
-            if (!$esSuperAdmin) die("No tienes permisos para gestionar roles.");
-            $idUsuario = isset($_POST['id_usuario']) ? (int)$_POST['id_usuario'] : 0;
-            $nuevoRol = isset($_POST['nuevo_rol']) ? (int)$_POST['nuevo_rol'] : 2; 
-            if ($idUsuario > 0) {
-                $userObj = new Usuario($conexion);
-                $userObj->actualizarRolUsuario($idUsuario, $nuevoRol);
-                header("Location: ../admin/admin.php?seccion=usuarios&mensaje=rol_actualizado");
-            }
             break;
             
         case "crearColeccion":
             if ($_SERVER["REQUEST_METHOD"] !== "POST") exit();
             $nombre = isset($_POST['nombre_coleccion']) ? trim($_POST['nombre_coleccion']) : "";
             $descripcion = isset($_POST['descripcion_coleccion']) ? trim($_POST['descripcion_coleccion']) : "";
-            
             if (!empty($nombre)) {
                 $prodObj = new Producto($conexion);
                 $prodObj->crearColeccion($nombre, $descripcion);
@@ -253,7 +290,6 @@ if (!empty($accion)) {
             $nombre = isset($_POST['nombre']) ? trim($_POST['nombre']) : "";
             $descripcion = isset($_POST['descripcion']) ? trim($_POST['descripcion']) : "";
             $nuevoEstado = isset($_POST['nuevo_estado']) ? $_POST['nuevo_estado'] : 2;
-            
             $prodObj = new Producto($conexion);
             $prodObj->actualizarEstadoColeccion($idCol, $nombre, $descripcion, $nuevoEstado);
             header("Location: ../admin/admin.php?seccion=colecciones&mensaje=coleccion_actualizada");
