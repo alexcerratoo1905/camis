@@ -39,28 +39,31 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/public/css/style.css">
     <style>
-        body, html { overflow-x: hidden; }
         #drop-zone { border: 2px dashed #343a40; border-radius: 8px; background-color: #f8f9fa; transition: all 0.3s ease; cursor: pointer; }
         #drop-zone:hover, #drop-zone.dragover { background-color: #e9ecef; border-color: #0dcaf0; }
         .preview-img-container { position: relative; display: inline-block; margin-right: 10px; margin-bottom: 10px; }
         .preview-img-container img { width: 100px; height: 100px; object-fit: cover; border-radius: 5px; border: 1px solid #ccc; }
+        
         .crm-thumb-container { position: relative; display: inline-block; margin-right: 8px; margin-bottom: 8px; }
-        .crm-thumb { width: 65px; height: 65px; object-fit: cover; border-radius: 4px; border: 1px solid #444; background-color: #fff; }
-        .btn-borrar-foto { position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-decoration: none; z-index: 10; }
+        .crm-thumb { width: 65px; height: 65px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; background-color: #fff; }
+        .btn-borrar-foto { position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); text-decoration: none; z-index: 10; }
         .btn-borrar-foto:hover { background: #bd2130; color: white; }
         
-        /* Arreglo Responsive Pestañas y Color Negro Fijo */
-        .nav-tabs-scroll { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; white-space: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px; border-bottom: 2px solid #dee2e6; }
+        /* Pestañas Responsive sin romper la pantalla */
+        .nav-tabs-scroll { display: flex; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; border-bottom: 2px solid #dee2e6; margin-bottom: 15px; }
         .nav-tabs-scroll::-webkit-scrollbar { height: 4px; }
         .nav-tabs-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-        .nav-tabs .nav-link { color: #495057 !important; border-radius: 0; padding: 0.5rem 1rem; font-weight: 600; border: none; }
+        .nav-tabs .nav-link { color: #495057 !important; border-radius: 0; padding: 0.6rem 1rem; font-weight: 600; border: none; white-space: nowrap; }
         .nav-tabs .nav-link:hover { color: #000 !important; background-color: #f8f9fa; }
         .nav-tabs .nav-link.active { color: #000 !important; border-bottom: 3px solid #000; font-weight: 800; background-color: #f8f9fa !important; }
         
-        /* Botón de guardado flotante */
-        .btn-flotante-guardar { position: fixed; bottom: 30px; right: 30px; z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: transform 0.2s; }
+        /* Botones Flotantes Arreglados */
+        .btn-flotante-guardar { position: fixed; bottom: 30px; right: 30px; z-index: 1040; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: transform 0.2s; }
         .btn-flotante-guardar:hover { transform: scale(1.05); }
-        .btn-flotante-movil { position: fixed; bottom: 0; left: 0; width: 100%; padding: 15px; background: white; border-top: 1px solid #ddd; z-index: 9999; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); }
+        .btn-flotante-movil { position: fixed; bottom: 0; left: 0; width: 100%; padding: 15px; background: white; border-top: 1px solid #ddd; z-index: 1040; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); }
+        
+        /* Espacio extra al final para que el botón móvil no tape el último producto */
+        .espacio-movil { padding-bottom: 100px; }
     </style>
 </head>
 
@@ -108,7 +111,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                 </div>
             </nav>
 
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content position-relative pb-5">
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content espacio-movil">
 
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
                     <h1 class="h2 text-uppercase fw-bold"><?php echo ($seccion == 'colecciones') ? 'Categorías' : ucfirst($seccion); ?></h1>
@@ -130,12 +133,12 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                     }
                 }
                 if (isset($_GET['error'])) {
-                    echo '<div class="alert alert-danger alert-dismissible fade show animate__animated animate__shakeX"><i class="bi bi-exclamation-triangle-fill me-2"></i> Ocurrió un error. Verifica que has rellenado todo bien.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+                    echo '<div class="alert alert-danger alert-dismissible fade show animate__animated animate__shakeX"><i class="bi bi-exclamation-triangle-fill me-2"></i> Ocurrió un error al procesar la solicitud.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
                 }
                 ?>
 
                 <div class="row">
-                    <div class="col-12 pb-5 mb-5">
+                    <div class="col-12">
                         <?php
                         switch ($seccion) {
                             case 'pedidos':
@@ -300,6 +303,9 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                         <?php
                                 break;
 
+                            // =========================================================
+                            // SECCIÓN DE PRODUCTOS 
+                            // =========================================================
                             case 'productos':
                                 $prod = new Producto($db->conectar());
 
@@ -313,6 +319,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
 
                                 $listaInventario = $prod->listarProductosPaginados(false, $productosPorPagina, $offset);
 
+                                // AGRUPAMOS POR PRODUCTO BASE
                                 $productosAgrupados = [];
                                 if (!empty($listaInventario)) {
                                     foreach ($listaInventario as $item) {
@@ -469,14 +476,14 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                 </div>
 
                                                 <div class="card-body bg-white border border-top-0 border-light p-3">
-                                                    <ul class="nav nav-tabs border-bottom mb-3 nav-tabs-scroll" role="tablist">
+                                                    <ul class="nav nav-tabs nav-tabs-scroll" role="tablist">
                                                         <?php 
                                                         $vIndex = 0;
                                                         foreach($datos['variantes'] as $color_id => $var): 
                                                             $isActive = ($vIndex == 0) ? 'active' : '';
                                                         ?>
                                                         <li class="nav-item flex-shrink-0" role="presentation">
-                                                            <button class="nav-link text-dark text-uppercase <?= $isActive ?>" data-bs-toggle="tab" data-bs-target="#variante-<?= $id ?>-<?= $color_id ?>" type="button" role="tab">
+                                                            <button class="nav-link text-uppercase <?= $isActive ?>" data-bs-toggle="tab" data-bs-target="#variante-<?= $id ?>-<?= $color_id ?>" type="button" role="tab">
                                                                 <i class="bi bi-tag-fill me-1"></i> <?= htmlspecialchars($var['equipacion']) ?>
                                                             </button>
                                                         </li>
@@ -489,7 +496,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                         </li>
                                                     </ul>
 
-                                                    <div class="tab-content">
+                                                    <div class="tab-content mt-3">
                                                         <?php 
                                                         $vIndex = 0;
                                                         foreach($datos['variantes'] as $color_id => $var): 
@@ -535,67 +542,70 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                     </div>
 
                                     <div class="btn-flotante-guardar d-none d-md-block">
-                                        <button type="submit" form="formMasivo" class="btn btn-dark btn-lg shadow-lg fw-bold px-5 py-3 rounded-pill border border-2 border-light text-uppercase ls-1">
+                                        <button type="submit" class="btn btn-dark btn-lg shadow-lg fw-bold px-5 py-3 rounded-pill border border-2 border-light text-uppercase ls-1">
                                             <i class="bi bi-save-fill fs-5 me-2"></i> Guardar Cambios
                                         </button>
                                     </div>
                                     <div class="btn-flotante-movil d-block d-md-none">
-                                        <button type="submit" form="formMasivo" class="btn btn-dark btn-lg shadow fw-bold w-100 text-uppercase">
+                                        <button type="submit" class="btn btn-dark btn-lg shadow fw-bold w-100 text-uppercase">
                                             <i class="bi bi-save-fill me-2"></i> Guardar Cambios
                                         </button>
                                     </div>
-
                                 </form>
 
                                 <?php foreach ($productosAgrupados as $id => $datos) { 
-                                    foreach($datos['variantes'] as $color_id => $var) { ?>
-                                    <form action="../controllers/adminController.php" method="POST" enctype="multipart/form-data" class="d-none">
-                                        <input type="hidden" name="accion" value="anadirFotosGaleriaExistente">
-                                        <input type="hidden" name="producto_id" value="<?= $id ?>">
-                                        <input type="hidden" name="color_id" value="<?= $color_id ?>">
-                                        <input type="hidden" name="pagina_retorno" value="<?= $paginaActual ?>">
-                                        <input type="file" id="add-foto-input-<?= $id ?>-<?= $color_id ?>" name="imagenes[]" onchange="this.form.submit();" multiple>
-                                    </form>
-                                <?php } } ?>
-
-                                <?php foreach ($productosAgrupados as $id => $datos) { ?>
-                                    <div class="d-none">
-                                        <div id="form-variante-<?= $id ?>">
-                                            <form action="../controllers/adminController.php" method="POST" enctype="multipart/form-data">
-                                                <div class="modal-body p-4">
-                                                    <input type="hidden" name="accion" value="anadirEquipacionExtra">
-                                                    <input type="hidden" name="producto_id" value="<?php echo $id; ?>">
-                                                    <input type="hidden" name="pagina_retorno" value="<?php echo $paginaActual; ?>">
-                                                    
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold small text-uppercase">Modelo Base:</label>
-                                                        <input type="text" class="form-control border-dark bg-light text-muted fw-bold" value="<?php echo htmlspecialchars($datos['nombre']); ?>" readonly>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold small text-uppercase">Elige la nueva equipación:</label>
-                                                        <select name="equipacion" class="form-select border-dark shadow-sm py-2" required>
-                                                            <option value="Local">Local</option>
-                                                            <option value="Visitante">Visitante</option>
-                                                            <option value="Tercera Equipación">Tercera Equipación</option>
-                                                            <option value="Cuarta Equipación">Cuarta Equipación</option>
-                                                            <option value="Portero">Portero</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold small text-uppercase">Sube las fotos de esta equipación:</label>
-                                                        <input type="file" name="imagenes[]" class="form-control border-dark py-2 shadow-sm" accept="image/*" multiple required>
-                                                        <small class="text-muted d-block mt-2"><i class="bi bi-info-circle me-1"></i>Selecciona todas las fotos juntas. La primera será la portada de la equipación.</small>
-                                                    </div>
+                                    if ($datos['es_segunda_mano'] == 1) continue;
+                                ?>
+                                    <div class="modal fade" id="modalVariante<?php echo $id; ?>" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-dark rounded-0 shadow-lg">
+                                                <div class="modal-header bg-warning text-dark rounded-0">
+                                                    <h5 class="modal-title fw-bold text-uppercase"><i class="bi bi-plus-circle-fill me-2"></i>Añadir Variante</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                 </div>
-                                                <div class="modal-footer rounded-0 bg-light">
-                                                    <button type="submit" class="btn btn-warning fw-bold px-4 w-100 border-dark text-dark text-uppercase"><i class="bi bi-cloud-arrow-up-fill me-2"></i>Guardar Variante</button>
-                                                </div>
-                                            </form>
+                                                <form action="../controllers/adminController.php" method="POST" enctype="multipart/form-data">
+                                                    <div class="modal-body p-4">
+                                                        <input type="hidden" name="accion" value="anadirEquipacionExtra">
+                                                        <input type="hidden" name="producto_id" value="<?php echo $id; ?>">
+                                                        <input type="hidden" name="pagina_retorno" value="<?php echo $paginaActual; ?>">
+                                                        
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold small text-uppercase">Modelo Base:</label>
+                                                            <input type="text" class="form-control border-dark bg-light text-muted fw-bold" value="<?php echo htmlspecialchars($datos['nombre']); ?>" readonly>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold small text-uppercase">Elige la nueva equipación:</label>
+                                                            <select name="equipacion" class="form-select border-dark shadow-sm py-2" required>
+                                                                <option value="Local">Local</option>
+                                                                <option value="Visitante">Visitante</option>
+                                                                <option value="Tercera Equipación">Tercera Equipación</option>
+                                                                <option value="Cuarta Equipación">Cuarta Equipación</option>
+                                                                <option value="Portero">Portero</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold small text-uppercase">Sube las fotos de esta equipación:</label>
+                                                            <input type="file" name="imagenes[]" class="form-control border-dark py-2 shadow-sm" accept="image/*" multiple>
+                                                            <small class="text-muted d-block mt-2"><i class="bi bi-info-circle me-1"></i>Selecciona todas las fotos juntas. La primera será la portada de la equipación.</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer rounded-0 bg-light">
+                                                        <button type="submit" class="btn btn-warning fw-bold px-4 w-100 border-dark text-dark text-uppercase"><i class="bi bi-cloud-arrow-up-fill me-2"></i>Guardar Variante</button>
+                                                    </div>
+                                                </form>
+                                            </div>
                                         </div>
                                     </div>
-                                    <script>
-                                        document.getElementById('modalVariante<?= $id ?>').querySelector('.modal-content').innerHTML += document.getElementById('form-variante-<?= $id ?>').innerHTML;
-                                    </script>
+
+                                    <?php foreach($datos['variantes'] as $color_id => $var) { ?>
+                                        <form action="../controllers/adminController.php" method="POST" enctype="multipart/form-data" class="d-none" id="form-add-foto-<?= $id ?>-<?= $color_id ?>">
+                                            <input type="hidden" name="accion" value="anadirFotosGaleriaExistente">
+                                            <input type="hidden" name="producto_id" value="<?= $id ?>">
+                                            <input type="hidden" name="color_id" value="<?= $color_id ?>">
+                                            <input type="hidden" name="pagina_retorno" value="<?= $paginaActual ?>">
+                                            <input type="file" id="add-foto-input-<?= $id ?>-<?= $color_id ?>" name="imagenes[]" onchange="document.getElementById('form-add-foto-<?= $id ?>-<?= $color_id ?>').submit();" multiple>
+                                        </form>
+                                    <?php } ?>
                                 <?php } ?>
 
                         <?php break; ?>
@@ -682,11 +692,15 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
             dropZone.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', (e) => procesarArchivos(e.target.files));
             
+            // Hemos limitado el "pegar" para que solo afecte si el Dropzone principal es visible.
+            // Así evitamos que la gente intente pegar fotos dentro del Modal y falle todo.
             window.addEventListener('paste', (e) => {
-                if (e.clipboardData && e.clipboardData.files.length > 0) {
-                    if(e.clipboardData.files[0].type.startsWith('image/')) {
-                        e.preventDefault(); 
-                        procesarArchivos(e.clipboardData.files);
+                if (document.getElementById('formNuevaPrenda').classList.contains('show')) {
+                    if (e.clipboardData && e.clipboardData.files.length > 0) {
+                        if(e.clipboardData.files[0].type.startsWith('image/')) {
+                            e.preventDefault(); 
+                            procesarArchivos(e.clipboardData.files);
+                        }
                     }
                 }
             });
