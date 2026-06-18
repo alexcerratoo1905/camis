@@ -17,7 +17,7 @@ $usu = new Usuario($conexion);
 $idUsu = $_SESSION["usuario_id"];
 $datosUsu = $usu->obtenerDatosUsu($idUsu);
 $pedido = new Pedido($conexion);
-$producto  = new Producto($conexion);
+$producto = new Producto($conexion);
 $listaProductos = $producto->listarInventarioCompleto();
 $listaColeciones = $producto->listarColecciones(true);
 $listaUsuarios = $usu->listarUsuarios();
@@ -32,13 +32,14 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HERROR | Panel de Administración</title>
+    <title>DJALEXITO | Panel de Administración</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/public/css/style.css">
     <style>
+        body, html { overflow-x: hidden; }
         #drop-zone { border: 2px dashed #343a40; border-radius: 8px; background-color: #f8f9fa; transition: all 0.3s ease; cursor: pointer; }
         #drop-zone:hover, #drop-zone.dragover { background-color: #e9ecef; border-color: #0dcaf0; }
         .preview-img-container { position: relative; display: inline-block; margin-right: 10px; margin-bottom: 10px; }
@@ -62,7 +63,6 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
         .btn-flotante-guardar:hover { transform: scale(1.05); }
         .btn-flotante-movil { position: fixed; bottom: 0; left: 0; width: 100%; padding: 15px; background: white; border-top: 1px solid #ddd; z-index: 1040; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); }
         
-        /* Espacio extra al final para que el botón móvil no tape el último producto */
         .espacio-movil { padding-bottom: 100px; }
     </style>
 </head>
@@ -71,7 +71,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
 
     <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow d-md-none" style="height: 60px;">
         <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-5 text-white text-uppercase fw-bold" href="#">
-            HERROR <span class="fs-6 fw-normal">Admin</span>
+            DJALEXITO <span class="fs-6 fw-normal">Admin</span>
         </a>
         <button class="navbar-toggler position-absolute d-md-none collapsed border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
             <span class="navbar-toggler-icon"></span>
@@ -83,7 +83,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
             <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar-admin collapse shadow">
                 <div class="position-sticky pt-3 pt-md-0">
                     <div class="px-4 mb-4 d-none d-md-block">
-                        <h4 class="text-uppercase fw-bold tracking-tighter text-white">HERROR <span class="fs-6 fw-normal">Admin</span></h4>
+                        <h4 class="text-uppercase fw-bold tracking-tighter text-white">DJALEXITO <span class="fs-6 fw-normal">Admin</span></h4>
                     </div>
 
                     <ul class="nav flex-column">
@@ -102,6 +102,24 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                 <i class="bi bi-collection"></i> Categorías
                             </a>
                         </li>
+                        
+                        <?php if ($esSuperAdmin): ?>
+                            <li class="nav-item">
+                                <a class="nav-link admin-nav-link <?php echo ($seccion == 'segundaMano') ? 'active' : ''; ?>" href="admin.php?seccion=segundaMano">
+                                    <i class="bi bi-arrow-repeat"></i> Segunda mano
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link admin-nav-link <?php echo ($seccion == 'usuarios') ? 'active' : ''; ?>" href="admin.php?seccion=usuarios">
+                                    <i class="bi bi-people"></i> Usuarios
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link admin-nav-link <?php echo ($seccion == 'looks') ? 'active' : ''; ?>" href="admin.php?seccion=looks">
+                                    <i class="bi bi-palette"></i> Looks
+                                </a>
+                            </li>
+                        <?php endif; ?>
                     </ul>
                     <hr class="mx-3 border-secondary">
                     <ul class="nav flex-column mb-2">
@@ -127,6 +145,8 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                         case 'foto_eliminada': $msgTexto = "¡La imagen ha sido borrada permanentemente!"; break;
                         case 'fotos_anadidas': $msgTexto = "¡Nuevas fotos añadidas a la galería!"; break;
                         case 'variante_anadida': $msgTexto = "¡Nueva equipación añadida al producto con éxito!"; break;
+                        case 'coleccion_creada': $msgTexto = "¡La nueva categoría se ha creado correctamente!"; break;
+                        case 'coleccion_actualizada': $msgTexto = "¡Categoría guardada!"; break;
                     }
                     if ($msgTexto != "") {
                         echo '<div class="alert alert-success alert-dismissible fade show animate__animated animate__fadeIn"><i class="bi bi-check-circle-fill me-2"></i> '.$msgTexto.'<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
@@ -138,9 +158,13 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                 ?>
 
                 <div class="row">
-                    <div class="col-12">
+                    <div class="col-12 pb-5 mb-5">
                         <?php
                         switch ($seccion) {
+                            
+                            // ==========================================
+                            // 1. SECCIÓN DE PEDIDOS
+                            // ==========================================
                             case 'pedidos':
                                 $listaPedidos = $pedido->listarPedidos();
                         ?>
@@ -303,9 +327,9 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                         <?php
                                 break;
 
-                            // =========================================================
-                            // SECCIÓN DE PRODUCTOS 
-                            // =========================================================
+                            // ==========================================
+                            // 2. SECCIÓN DE PRODUCTOS (INVENTARIO)
+                            // ==========================================
                             case 'productos':
                                 $prod = new Producto($db->conectar());
 
@@ -319,7 +343,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
 
                                 $listaInventario = $prod->listarProductosPaginados(false, $productosPorPagina, $offset);
 
-                                // AGRUPAMOS POR PRODUCTO BASE
+                                // AGRUPAMOS POR PRODUCTO BASE Y VARIANTES
                                 $productosAgrupados = [];
                                 if (!empty($listaInventario)) {
                                     foreach ($listaInventario as $item) {
@@ -364,7 +388,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                             </div>
                                             <div class="col-6 col-md-2">
                                                 <label class="fw-bold small">Precio Base (€):</label>
-                                                <input type="number" step="0.01" name="precio" class="form-control border-dark" value="17.00" required>
+                                                <input type="number" step="0.01" name="precio" class="form-control border-dark" value="22.00" required>
                                             </div>
                                             <div class="col-6 col-md-3">
                                                 <label class="fw-bold small">Equipación Principal:</label>
@@ -409,7 +433,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                     <input type="hidden" name="pagina_retorno" value="<?php echo $paginaActual; ?>">
 
                                     <?php if (empty($productosAgrupados)) { ?>
-                                        <div class="alert alert-secondary text-center py-5">No se han encontrado productos en esta página.</div>
+                                        <div class="alert alert-secondary text-center py-5">No se han encontrado productos.</div>
                                     <?php } else { ?>
                                         <?php 
                                         foreach ($productosAgrupados as $id => $datos) { 
@@ -420,6 +444,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                             $descReal = $stmtDesc->fetchColumn();
                                         ?>
                                             <div class="card mb-5 border-0 shadow-sm admin-card" style="border-left: 6px solid #0dcaf0;">
+                                                
                                                 <div class="card-header bg-dark text-white py-3">
                                                     <div class="row align-items-center g-3">
                                                         <div class="col-12 col-lg-4">
@@ -469,13 +494,14 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                         <div class="col-12">
                                                             <div class="input-group input-group-sm">
                                                                 <span class="input-group-text bg-secondary text-white border-0 small font-monospace">INFO</span>
-                                                                <input type="text" name="descripcion[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($descReal ?? ''); ?>" class="form-control bg-dark text-white border-0 small" placeholder="Descripción breve de la camiseta">
+                                                                <input type="text" name="descripcion[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($descReal ?? ''); ?>" class="form-control bg-dark text-white border-0 small" placeholder="Descripción breve">
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 <div class="card-body bg-white border border-top-0 border-light p-3">
+                                                    
                                                     <ul class="nav nav-tabs nav-tabs-scroll" role="tablist">
                                                         <?php 
                                                         $vIndex = 0;
@@ -483,7 +509,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                             $isActive = ($vIndex == 0) ? 'active' : '';
                                                         ?>
                                                         <li class="nav-item flex-shrink-0" role="presentation">
-                                                            <button class="nav-link text-uppercase <?= $isActive ?>" data-bs-toggle="tab" data-bs-target="#variante-<?= $id ?>-<?= $color_id ?>" type="button" role="tab">
+                                                            <button class="nav-link text-dark text-uppercase <?= $isActive ?>" data-bs-toggle="tab" data-bs-target="#variante-<?= $id ?>-<?= $color_id ?>" type="button" role="tab">
                                                                 <i class="bi bi-tag-fill me-1"></i> <?= htmlspecialchars($var['equipacion']) ?>
                                                             </button>
                                                         </li>
@@ -585,7 +611,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                         </div>
                                                         <div class="mb-3">
                                                             <label class="form-label fw-bold small text-uppercase">Sube las fotos de esta equipación:</label>
-                                                            <input type="file" name="imagenes[]" class="form-control border-dark py-2 shadow-sm" accept="image/*" multiple>
+                                                            <input type="file" name="imagenes[]" class="form-control border-dark py-2 shadow-sm" accept="image/*" multiple required>
                                                             <small class="text-muted d-block mt-2"><i class="bi bi-info-circle me-1"></i>Selecciona todas las fotos juntas. La primera será la portada de la equipación.</small>
                                                         </div>
                                                     </div>
@@ -608,8 +634,12 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                     <?php } ?>
                                 <?php } ?>
 
-                        <?php break; ?>
+                        <?php 
+                                break;
                         
+                            // ==========================================
+                            // 3. SECCIÓN DE COLECCIONES (LIGAS)
+                            // ==========================================
                             case 'colecciones':
                                 $todasLasColecciones = $producto->listarColecciones(true);
                         ?>
@@ -653,27 +683,41 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                         <tbody>
                                             <?php foreach ($todasLasColecciones as $col) { ?>
                                                 <tr>
-                                                    <form action="../controllers/adminController.php" method="POST">
-                                                        <input type="hidden" name="accion" value="actualizarColeccion">
-                                                        <input type="hidden" name="id_coleccion" value="<?php echo $col['id']; ?>">
-                                                        <td class="text-center text-secondary fw-bold">#<?php echo $col['id']; ?></td>
-                                                        <td><input type="text" name="nombre" value="<?php echo htmlspecialchars($col['nombre']); ?>" class="form-control form-control-sm fw-bold border-dark"></td>
-                                                        <td><textarea name="descripcion" class="form-control form-control-sm border-dark" rows="1"><?php echo htmlspecialchars($col['descripcion'] ?? ''); ?></textarea></td>
-                                                        <td>
-                                                            <select name="nuevo_estado" class="form-select form-select-sm border-dark">
-                                                                <option value="1" <?php echo ($col['activa'] == 1 ? 'selected' : ''); ?>>Activa</option>
-                                                                <option value="2" <?php echo ($col['activa'] == 2 ? 'selected' : ''); ?>>Inactiva</option>
-                                                            </select>
-                                                        </td>
-                                                        <td class="text-center"><button type="submit" class="btn btn-sm btn-dark"><i class="bi bi-check-lg"></i></button></td>
-                                                    </form>
+                                                    <td class="text-center text-secondary fw-bold">#<?php echo $col['id']; ?></td>
+                                                    <td>
+                                                        <input type="text" name="nombre" value="<?php echo htmlspecialchars($col['nombre']); ?>" class="form-control form-control-sm fw-bold border-dark" form="form_col_<?php echo $col['id']; ?>">
+                                                    </td>
+                                                    <td>
+                                                        <textarea name="descripcion" class="form-control form-control-sm border-dark" rows="1" form="form_col_<?php echo $col['id']; ?>"><?php echo htmlspecialchars($col['descripcion'] ?? ''); ?></textarea>
+                                                    </td>
+                                                    <td>
+                                                        <select name="nuevo_estado" class="form-select form-select-sm border-dark" form="form_col_<?php echo $col['id']; ?>">
+                                                            <option value="1" <?php echo ($col['activa'] == 1 ? 'selected' : ''); ?>>Activa</option>
+                                                            <option value="2" <?php echo ($col['activa'] == 2 ? 'selected' : ''); ?>>Inactiva</option>
+                                                        </select>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <form id="form_col_<?php echo $col['id']; ?>" action="../controllers/adminController.php" method="POST" class="m-0">
+                                                            <input type="hidden" name="accion" value="actualizarColeccion">
+                                                            <input type="hidden" name="id_coleccion" value="<?php echo $col['id']; ?>">
+                                                            <button type="submit" class="btn btn-sm btn-dark"><i class="bi bi-check-lg"></i></button>
+                                                        </form>
+                                                    </td>
                                                 </tr>
                                             <?php } ?>
                                         </tbody>
                                     </table>
                                 </div>
-                        <?php break; ?>
-                        <?php } ?>
+                        <?php 
+                                break;
+                        
+                            case 'segundaMano':
+                            case 'usuarios':
+                            case 'looks':
+                                if (!$esSuperAdmin) echo "<div class='alert alert-danger'>No tienes permisos.</div>";
+                                break;
+                        }
+                        ?>
                     </div>
                 </div>
             </main>
@@ -692,10 +736,9 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
             dropZone.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', (e) => procesarArchivos(e.target.files));
             
-            // Hemos limitado el "pegar" para que solo afecte si el Dropzone principal es visible.
-            // Así evitamos que la gente intente pegar fotos dentro del Modal y falle todo.
             window.addEventListener('paste', (e) => {
-                if (document.getElementById('formNuevaPrenda').classList.contains('show')) {
+                let formPrenda = document.getElementById('formNuevaPrenda');
+                if (formPrenda && formPrenda.classList.contains('show')) {
                     if (e.clipboardData && e.clipboardData.files.length > 0) {
                         if(e.clipboardData.files[0].type.startsWith('image/')) {
                             e.preventDefault(); 
