@@ -32,7 +32,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DJALEXITO | Panel de Administración</title>
+    <title>HERROR | Panel de Administración</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
@@ -50,7 +50,6 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
         .btn-borrar-foto { position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); text-decoration: none; z-index: 10; }
         .btn-borrar-foto:hover { background: #bd2130; color: white; }
         
-        /* Pestañas Responsive sin romper la pantalla */
         .nav-tabs-scroll { display: flex; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; border-bottom: 2px solid #dee2e6; margin-bottom: 15px; }
         .nav-tabs-scroll::-webkit-scrollbar { height: 4px; }
         .nav-tabs-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
@@ -58,11 +57,9 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
         .nav-tabs .nav-link:hover { color: #000 !important; background-color: #f8f9fa; }
         .nav-tabs .nav-link.active { color: #000 !important; border-bottom: 3px solid #000; font-weight: 800; background-color: #f8f9fa !important; }
         
-        /* Botones Flotantes Arreglados */
         .btn-flotante-guardar { position: fixed; bottom: 30px; right: 30px; z-index: 1040; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: transform 0.2s; }
         .btn-flotante-guardar:hover { transform: scale(1.05); }
         .btn-flotante-movil { position: fixed; bottom: 0; left: 0; width: 100%; padding: 15px; background: white; border-top: 1px solid #ddd; z-index: 1040; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); }
-        
         .espacio-movil { padding-bottom: 100px; }
     </style>
 </head>
@@ -71,7 +68,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
 
     <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow d-md-none" style="height: 60px;">
         <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-5 text-white text-uppercase fw-bold" href="#">
-            DJALEXITO <span class="fs-6 fw-normal">Admin</span>
+            HERROR <span class="fs-6 fw-normal">Admin</span>
         </a>
         <button class="navbar-toggler position-absolute d-md-none collapsed border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
             <span class="navbar-toggler-icon"></span>
@@ -83,7 +80,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
             <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar-admin collapse shadow">
                 <div class="position-sticky pt-3 pt-md-0">
                     <div class="px-4 mb-4 d-none d-md-block">
-                        <h4 class="text-uppercase fw-bold tracking-tighter text-white">DJALEXITO <span class="fs-6 fw-normal">Admin</span></h4>
+                        <h4 class="text-uppercase fw-bold tracking-tighter text-white">HERROR <span class="fs-6 fw-normal">Admin</span></h4>
                     </div>
 
                     <ul class="nav flex-column">
@@ -146,7 +143,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                         case 'fotos_anadidas': $msgTexto = "¡Nuevas fotos añadidas a la galería!"; break;
                         case 'variante_anadida': $msgTexto = "¡Nueva equipación añadida al producto con éxito!"; break;
                         case 'coleccion_creada': $msgTexto = "¡La nueva categoría se ha creado correctamente!"; break;
-                        case 'coleccion_actualizada': $msgTexto = "¡Categoría guardada!"; break;
+                        case 'coleccion_actualizada': $msgTexto = "¡Categoría y descuentos guardados con éxito!"; break;
                     }
                     if ($msgTexto != "") {
                         echo '<div class="alert alert-success alert-dismissible fade show animate__animated animate__fadeIn"><i class="bi bi-check-circle-fill me-2"></i> '.$msgTexto.'<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
@@ -162,9 +159,6 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                         <?php
                         switch ($seccion) {
                             
-                            // ==========================================
-                            // 1. SECCIÓN DE PEDIDOS
-                            // ==========================================
                             case 'pedidos':
                                 $listaPedidos = $pedido->listarPedidos();
                         ?>
@@ -327,9 +321,6 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                         <?php
                                 break;
 
-                            // ==========================================
-                            // 2. SECCIÓN DE PRODUCTOS (INVENTARIO)
-                            // ==========================================
                             case 'productos':
                                 $prod = new Producto($db->conectar());
 
@@ -343,7 +334,6 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
 
                                 $listaInventario = $prod->listarProductosPaginados(false, $productosPorPagina, $offset);
 
-                                // AGRUPAMOS POR PRODUCTO BASE Y VARIANTES
                                 $productosAgrupados = [];
                                 if (!empty($listaInventario)) {
                                     foreach ($listaInventario as $item) {
@@ -388,7 +378,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                             </div>
                                             <div class="col-6 col-md-2">
                                                 <label class="fw-bold small">Precio Base (€):</label>
-                                                <input type="number" step="0.01" name="precio" class="form-control border-dark" value="22.00" required>
+                                                <input type="number" step="0.01" name="precio" class="form-control border-dark" value="17.00" required>
                                             </div>
                                             <div class="col-6 col-md-3">
                                                 <label class="fw-bold small">Equipación Principal:</label>
@@ -558,9 +548,33 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                             <ul class="pagination mb-0 shadow-sm">
                                                 <?php $disabledPrev = ($paginaActual <= 1) ? 'disabled' : ''; ?>
                                                 <li class="page-item <?php echo $disabledPrev; ?>"><a class="page-link text-dark" href="admin.php?seccion=productos&pagina=<?= $paginaActual - 1 ?>">Anterior</a></li>
-                                                <?php for ($i = 1; $i <= $totalPaginas; $i++) { $activa = ($i == $paginaActual) ? 'active bg-dark border-dark text-white' : 'text-dark'; ?>
-                                                    <li class="page-item"><a class="page-link <?php echo $activa; ?>" href="admin.php?seccion=productos&pagina=<?= $i ?>"><?php echo $i; ?></a></li>
-                                                <?php } ?>
+                                                
+                                                <?php 
+                                                // PAGINACIÓN ARREGLADA (Agrupa con ...)
+                                                $rango = 2; // Páginas a mostrar a cada lado
+                                                $inicio = max(1, $paginaActual - $rango);
+                                                $fin = min($totalPaginas, $paginaActual + $rango);
+
+                                                if ($inicio > 1) {
+                                                    echo '<li class="page-item"><a class="page-link text-dark" href="admin.php?seccion=productos&pagina=1">1</a></li>';
+                                                    if ($inicio > 2) {
+                                                        echo '<li class="page-item disabled"><span class="page-link text-dark border-0">...</span></li>';
+                                                    }
+                                                }
+
+                                                for ($i = $inicio; $i <= $fin; $i++) { 
+                                                    $activa = ($i == $paginaActual) ? 'active bg-dark border-dark text-white' : 'text-dark'; 
+                                                    echo '<li class="page-item"><a class="page-link '.$activa.'" href="admin.php?seccion=productos&pagina='.$i.'">'.$i.'</a></li>';
+                                                } 
+
+                                                if ($fin < $totalPaginas) {
+                                                    if ($fin < $totalPaginas - 1) {
+                                                        echo '<li class="page-item disabled"><span class="page-link text-dark border-0">...</span></li>';
+                                                    }
+                                                    echo '<li class="page-item"><a class="page-link text-dark" href="admin.php?seccion=productos&pagina='.$totalPaginas.'">'.$totalPaginas.'</a></li>';
+                                                }
+                                                ?>
+
                                                 <?php $disabledNext = ($paginaActual >= $totalPaginas) ? 'disabled' : ''; ?>
                                                 <li class="page-item <?php echo $disabledNext; ?>"><a class="page-link text-dark" href="admin.php?seccion=productos&pagina=<?= $paginaActual + 1 ?>">Siguiente</a></li>
                                             </ul>
@@ -637,9 +651,6 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                         <?php 
                                 break;
                         
-                            // ==========================================
-                            // 3. SECCIÓN DE COLECCIONES (LIGAS)
-                            // ==========================================
                             case 'colecciones':
                                 $todasLasColecciones = $producto->listarColecciones(true);
                         ?>
@@ -676,6 +687,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                 <th>ID</th>
                                                 <th>Nombre Categoría</th>
                                                 <th>Descripción</th>
+                                                <th>Rebaja Masiva</th>
                                                 <th>Estado</th>
                                                 <th>Acción</th>
                                             </tr>
@@ -691,6 +703,13 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                         <textarea name="descripcion" class="form-control form-control-sm border-dark" rows="1" form="form_col_<?php echo $col['id']; ?>"><?php echo htmlspecialchars($col['descripcion'] ?? ''); ?></textarea>
                                                     </td>
                                                     <td>
+                                                        <div class="input-group input-group-sm">
+                                                            <input type="number" name="descuento_masivo" class="form-control border-dark text-center fw-bold" placeholder="0" min="0" max="100" form="form_col_<?php echo $col['id']; ?>">
+                                                            <span class="input-group-text bg-dark text-white border-dark">%</span>
+                                                        </div>
+                                                        <small class="text-muted d-block text-center mt-1" style="font-size: 0.65rem;">Se aplica a toda la liga</small>
+                                                    </td>
+                                                    <td>
                                                         <select name="nuevo_estado" class="form-select form-select-sm border-dark" form="form_col_<?php echo $col['id']; ?>">
                                                             <option value="1" <?php echo ($col['activa'] == 1 ? 'selected' : ''); ?>>Activa</option>
                                                             <option value="2" <?php echo ($col['activa'] == 2 ? 'selected' : ''); ?>>Inactiva</option>
@@ -700,7 +719,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                         <form id="form_col_<?php echo $col['id']; ?>" action="../controllers/adminController.php" method="POST" class="m-0">
                                                             <input type="hidden" name="accion" value="actualizarColeccion">
                                                             <input type="hidden" name="id_coleccion" value="<?php echo $col['id']; ?>">
-                                                            <button type="submit" class="btn btn-sm btn-dark"><i class="bi bi-check-lg"></i></button>
+                                                            <button type="submit" class="btn btn-sm btn-dark px-3"><i class="bi bi-check-lg fs-6"></i></button>
                                                         </form>
                                                     </td>
                                                 </tr>
@@ -708,9 +727,9 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                         </tbody>
                                     </table>
                                 </div>
-                        <?php 
-                                break;
+                        <?php break; ?>
                         
+                            <?php
                             case 'segundaMano':
                             case 'usuarios':
                             case 'looks':

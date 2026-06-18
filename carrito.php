@@ -32,9 +32,8 @@ include './includes/header.php';
     <?php else: ?>
         <div class="row g-5">
             <div class="col-lg-8">
-                
+
                 <?php
-                // La regla es: a los 5 artículos el envío es gratis
                 $faltanEnvio = 5 - $numArticulos;
                 $porcentajeEnvio = min(($numArticulos / 5) * 100, 100);
                 ?>
@@ -46,7 +45,7 @@ include './includes/header.php';
                             </span>
                         <?php else: ?>
                             <span class="fw-bold text-uppercase text-success small" style="letter-spacing: 1px;">
-                                <i class="bi bi-box-seam-fill me-2"></i>¡Has desbloqueado el envío GRATIS!
+                                <i class="bi bi-box-seam-fill me-2"></i> ¡Has desbloqueado el envío GRATIS!
                             </span>
                         <?php endif; ?>
                         <span class="small text-muted fw-bold"><?php echo $numArticulos; ?> / 5</span>
@@ -60,18 +59,19 @@ include './includes/header.php';
                         </div>
                     <?php endif; ?>
                 </div>
-                <?php foreach ($carritoDetallado as $item){ ?>
+
+                <?php foreach ($carritoDetallado as $item) { ?>
                     <div class="card border-0 border-bottom rounded-0 mb-3 pb-3">
                         <div class="row g-0">
-                            
+
                             <div class="col-4 col-md-2">
                                 <a href="fichaProducto.php?idPrenda=<?php echo $item['idPrenda']; ?>&color=<?php echo $item['color_id']; ?>">
                                     <img src="<?php echo $item['imagen']; ?>" class="img-fluid w-100 object-fit-cover" style="height: 140px;" alt="<?php echo $item['nombre']; ?>">
                                 </a>
                             </div>
-                            
+
                             <div class="col-8 col-md-10 px-3 d-flex flex-column justify-content-between">
-                                
+
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div class="pe-2">
                                         <h5 class="fw-bold text-uppercase fs-6 mb-1">
@@ -80,26 +80,27 @@ include './includes/header.php';
                                             </a>
                                         </h5>
                                         <p class="text-muted small mb-1">Color: <?php echo $item['color_nombre']; ?> | Talla: <?php echo $item['talla']; ?></p>
-                                        
+
                                         <ul class="list-unstyled mt-1 mb-0 small text-muted fst-italic">
+                                            <?php if (isset($item['version_genero']) && $item['version_genero'] != 'hombre'): ?><li>Versión: <?php echo ucfirst($item['version_genero']); ?></li><?php endif; ?>
                                             <?php if ($item['extra_player']): ?><li>+ Versión Player</li><?php endif; ?>
                                             <?php if ($item['extra_pantalon']): ?><li>+ Pantalón a juego</li><?php endif; ?>
                                             <?php if ($item['tiene_parche']): ?><li>+ Parches: <?= htmlspecialchars($item['texto_parche']) ?></li><?php endif; ?>
                                             <?php if ($item['tiene_personalizacion']): ?><li>+ Nombre: <?= htmlspecialchars($item['texto_nombre']) ?> | Nº: <?= htmlspecialchars($item['texto_numero']) ?></li><?php endif; ?>
                                         </ul>
                                     </div>
-                                    
+
                                     <div class="text-end d-none d-md-block">
-                                        <?php if ($item['rebaja'] > 0){ ?>
+                                        <?php if ($item['rebaja'] > 0) { ?>
                                             <span class="text-muted text-decoration-line-through small"><?php echo number_format($item['precio_original'] * $item['cantidad'], 2); ?> €</span><br>
                                             <span class="fw-bold fs-5 text-danger"><?php echo number_format($item['subtotal'], 2); ?> €</span>
                                             <div class="mt-1"><span class="badge bg-danger">-<?php echo $item['rebaja']; ?>%</span></div>
-                                        <?php } else{ ?>
+                                        <?php } else { ?>
                                             <span class="fw-bold fs-5"><?php echo number_format($item['subtotal'], 2); ?> €</span>
                                         <?php } ?>
                                     </div>
                                 </div>
-                                
+
                                 <div class="d-flex justify-content-between align-items-end mt-2 mt-md-0">
                                     <div class="d-flex align-items-center gap-2 gap-md-3">
                                         <div class="d-flex align-items-center border border-dark rounded-0">
@@ -107,13 +108,13 @@ include './includes/header.php';
                                             <span class="px-3 fw-bold border-start border-end border-dark" style="font-size: 0.9rem;"><?php echo $item['cantidad']; ?></span>
                                             <a href="controllers/carritoController.php?accion=sumar&indice=<?php echo $item['indice']; ?>" class="btn btn-sm btn-light rounded-0 px-2 py-0 border-0" style="background: transparent;">+</a>
                                         </div>
-                                        
+
                                         <a href="controllers/carritoController.php?accion=eliminar&indice=<?php echo $item['indice']; ?>" class="text-danger small text-decoration-none">
                                             <i class="bi bi-trash fs-5 d-md-none"></i>
                                             <span class="d-none d-md-inline text-decoration-underline">Eliminar</span>
                                         </a>
                                     </div>
-                                    
+
                                     <div class="text-end d-block d-md-none">
                                         <span class="fw-bold fs-6"><?php echo number_format($item['subtotal'], 2); ?> €</span>
                                     </div>
@@ -127,16 +128,18 @@ include './includes/header.php';
             <div class="col-lg-4">
                 <div class="card border-0 shadow-sm rounded-0 p-4 bg-light">
                     <h4 class="fw-bold text-uppercase mb-4">Resumen</h4>
-
                     <?php
-                    // -------- LÓGICA DROPSHIPPING ---------
-                    // 1. Envío
+                    // -------- LÓGICA DE ENVÍO ACTUALIZADA ---------
                     $envio = 0;
-                    if ($numArticulos == 1) $envio = 5.00;
-                    elseif ($numArticulos == 2) $envio = 4.00;
-                    elseif ($numArticulos == 3) $envio = 3.00;
-                    elseif ($numArticulos == 4) $envio = 2.00;
-                    else $envio = 0.00; // GRATIS
+                    if ($numArticulos == 1) {
+                        $envio = 4.99;
+                    } elseif ($numArticulos == 2 || $numArticulos == 3) {
+                        $envio = 2.99;
+                    } elseif ($numArticulos == 4) {
+                        $envio = 1.99;
+                    } else {
+                        $envio = 0.00; // GRATIS a partir de 5
+                    }
 
                     // 2. Descuentos Automáticos
                     $porcentajeAuto = 0;
@@ -148,8 +151,6 @@ include './includes/header.php';
 
                     // 3. Descuento del Código Promocional
                     $porcentajeManual = isset($_SESSION['descuento']) ? (int)$_SESSION['descuento']['porcentaje'] : 0;
-
-                    // Nos quedamos siempre con el MAYOR descuento
                     $porcentajeFinal = max($porcentajeAuto, $porcentajeManual);
                     $descuentoCantidad = $subtotalCarrito * ($porcentajeFinal / 100);
 
@@ -164,7 +165,7 @@ include './includes/header.php';
 
                     <div class="d-flex justify-content-between mb-3 text-muted border-bottom pb-3">
                         <span>Gastos de envío</span>
-                        <?php if($envio == 0): ?>
+                        <?php if ($envio == 0): ?>
                             <span class="text-success fw-bold">GRATIS</span>
                         <?php else: ?>
                             <span><?php echo number_format($envio, 2); ?> €</span>
@@ -173,7 +174,7 @@ include './includes/header.php';
 
                     <div class="mb-4 p-3 bg-white border border-dark">
                         <label class="form-label fw-bold text-uppercase small" style="letter-spacing: 1px;">¿Tienes un código de descuento?</label>
-                        <?php if (isset($_GET['error'])){ ?>
+                        <?php if (isset($_GET['error'])) { ?>
                             <div class="alert alert-danger py-2 rounded-0 small fw-bold mb-3 border-2 border-danger">
                                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                                 <?php
@@ -183,7 +184,7 @@ include './includes/header.php';
                             </div>
                         <?php }; ?>
 
-                        <?php if (isset($_SESSION['descuento'])){ ?>
+                        <?php if (isset($_SESSION['descuento'])) { ?>
                             <div class="alert alert-success m-0 py-2 d-flex justify-content-between align-items-center rounded-0 border-success border-2 fw-bold">
                                 <span><i class="bi bi-tag-fill me-2"></i> Código <strong><?= $_SESSION['descuento']['codigo'] ?></strong> (-<?= $_SESSION['descuento']['porcentaje'] ?>%)</span>
                                 <a href="controllers/carritoController.php?accion=quitar_descuento" class="text-danger text-decoration-none" title="Quitar descuento"><i class="bi bi-x-lg"></i></a>

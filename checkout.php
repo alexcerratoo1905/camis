@@ -9,13 +9,11 @@ include './includes/header.php';
             <p class="text-muted">Revisa tus datos de envío y finaliza la compra</p>
         </div>
     </div>
-
-    <!-- El formulario envuelve toda la página y apunta a tu pasarela de Stripe -->
+    
     <form id="formPago" action="controllers/pagoController.php" method="POST">
         <div class="row g-5">
             
             <div class="col-lg-7">
-                <!-- FORMULARIO DE ENVÍO DIRECTO EN CHECKOUT -->
                 <h4 class="fw-bold text-uppercase mb-4 border-bottom pb-2">1. Datos de Envío</h4>
                 <div class="row g-3 mb-5">
                     <div class="col-md-6">
@@ -70,11 +68,11 @@ include './includes/header.php';
                     </div>
                 </div>
             </div>
-
-            <!-- RESUMEN LATERAL -->
+            
             <div class="col-lg-5">
                 <div class="card border-0 shadow-sm rounded-0 p-4 bg-light sticky-top" style="top: 100px;">
                     <h4 class="fw-bold text-uppercase mb-4">Resumen del Pedido</h4>
+                    
                     <div class="border-bottom pb-3 mb-3" style="max-height: 250px; overflow-y: auto;">
                         <?php
                         $numArticulos = 0;
@@ -85,7 +83,6 @@ include './includes/header.php';
                                 $rebaja = isset($producto['rebaja']) ? (int)$producto['rebaja'] : 0;
                                 $precioBase = $producto['precio'] - ($producto['precio'] * $rebaja / 100);
                                 
-                                // Recalculamos los extras que eligió en la ficha
                                 $extraPrecio = 0;
                                 if (!empty($item['extra_player'])) $extraPrecio += 3;
                                 if (!empty($item['extra_pantalon'])) $extraPrecio += 10;
@@ -116,13 +113,17 @@ include './includes/header.php';
                     </div>
 
                     <?php
-                    // Mismas reglas que en el carrito
+                    // -------- LÓGICA DE ENVÍO ACTUALIZADA ---------
                     $envio = 0;
-                    if ($numArticulos == 1) $envio = 5.00;
-                    elseif ($numArticulos == 2) $envio = 4.00;
-                    elseif ($numArticulos == 3) $envio = 3.00;
-                    elseif ($numArticulos == 4) $envio = 2.00;
-                    else $envio = 0.00; // GRATIS
+                    if ($numArticulos == 1) {
+                        $envio = 4.99;
+                    } elseif ($numArticulos == 2 || $numArticulos == 3) {
+                        $envio = 2.99;
+                    } elseif ($numArticulos == 4) {
+                        $envio = 1.99;
+                    } else {
+                        $envio = 0.00; // GRATIS a partir de 5
+                    }
 
                     $porcentajeAuto = 0;
                     if ($numArticulos >= 5 || $subtotalCheckout > 120) {
@@ -130,7 +131,6 @@ include './includes/header.php';
                     } elseif ($numArticulos > 3 || $subtotalCheckout > 75) {
                         $porcentajeAuto = 10;
                     }
-
                     $porcentajeManual = isset($_SESSION['descuento']) ? (int)$_SESSION['descuento']['porcentaje'] : 0;
                     $porcentajeFinal = max($porcentajeAuto, $porcentajeManual);
                     $descuentoCantidad = $subtotalCheckout * ($porcentajeFinal / 100);
@@ -141,7 +141,6 @@ include './includes/header.php';
                         <span>Subtotal</span>
                         <span><?php echo number_format($subtotalCheckout, 2); ?> €</span>
                     </div>
-
                     <div class="d-flex justify-content-between mb-3 text-muted border-bottom pb-3">
                         <span>Gastos de envío</span>
                         <?php if ($envio == 0): ?>
@@ -150,7 +149,6 @@ include './includes/header.php';
                             <span class="fw-bold"><?php echo number_format($envio, 2); ?> €</span>
                         <?php endif; ?>
                     </div>
-
                     <?php if ($porcentajeFinal > 0): ?>
                         <div class="d-flex justify-content-between mb-2 text-danger fw-bold bg-danger bg-opacity-10 p-2">
                             <?php if ($porcentajeFinal == $porcentajeAuto): ?>
@@ -161,7 +159,6 @@ include './includes/header.php';
                             <span>-<?= number_format($descuentoCantidad, 2) ?> €</span>
                         </div>
                     <?php endif; ?>
-
                     <div class="d-flex justify-content-between mb-4 mt-3 border-top border-dark pt-3">
                         <span class="fw-bold text-uppercase fs-5">Total a Pagar</span>
                         <span class="fw-bold fs-3"><?php echo number_format($totalFinalCheckout, 2); ?> €</span>
@@ -170,7 +167,7 @@ include './includes/header.php';
                     <!-- Campos ocultos para Stripe -->
                     <input type="hidden" name="totalPedido" value="<?php echo $totalFinalCheckout; ?>">
                     <input type="hidden" name="direccionEnvio" id="direccionEnvioFinal" value="">
-
+                    
                     <button type="submit" class="btn btn-dark rounded-0 py-3 text-uppercase fw-bold w-100 ls-1">
                         Confirmar y Pagar
                     </button>
@@ -181,7 +178,6 @@ include './includes/header.php';
 </main>
 
 <script>
-    // Este script recoge todos los campos y los junta en uno solo para no tener que reprogramar tu Stripe
     document.getElementById('formPago').addEventListener('submit', function(e) {
         let nom = document.getElementById('envio_nombre').value + ' ' + document.getElementById('envio_apellidos').value;
         let dir = document.getElementById('envio_direccion').value;
@@ -191,8 +187,7 @@ include './includes/header.php';
         let ca = document.getElementById('envio_ca').value;
         let pais = document.getElementById('envio_pais').value;
         let tlf = document.getElementById('envio_telefono').value;
-
-        // Concatenamos en un solo string bonito para guardarlo en la Base de Datos de Pedidos
+        
         let stringEnvio = nom + " | " + dir + ", " + cp + " " + ciu + ", " + prov + " (" + ca + "), " + pais + " | Tlf: " + tlf;
         
         document.getElementById('direccionEnvioFinal').value = stringEnvio;

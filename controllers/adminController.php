@@ -51,7 +51,7 @@ if (!empty($accion)) {
                 $stmtLink = $conexion->prepare("INSERT IGNORE INTO producto_colores (producto_id, color_id) VALUES (?, ?)");
                 $stmtLink->execute([$producto_id, $color_id]);
 
-                // 3. ¡EL ARREGLO! Inyectar las tallas en la BBDD para que el producto no se oculte
+                // 3. Inyectar las tallas en la BBDD para que el producto no se oculte
                 $tallas = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
                 $stmtTalla = $conexion->prepare("INSERT IGNORE INTO producto_tallas (producto_id, color_id, talla, stock) VALUES (?, ?, ?, 0)");
                 foreach($tallas as $t) {
@@ -227,7 +227,7 @@ if (!empty($accion)) {
                 $stmtProdColor = $conexion->prepare("INSERT INTO producto_colores (producto_id, color_id) VALUES (?, ?)");
                 $stmtProdColor->execute([$producto_id, $color_id]);
 
-                // ¡EL ARREGLO! Inyectar las tallas en la BBDD
+                // Inyectar las tallas en la BBDD
                 $tallas = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
                 $stmtTalla = $conexion->prepare("INSERT IGNORE INTO producto_tallas (producto_id, color_id, talla, stock) VALUES (?, ?, ?, 0)");
                 foreach($tallas as $t) {
@@ -290,8 +290,19 @@ if (!empty($accion)) {
             $nombre = isset($_POST['nombre']) ? trim($_POST['nombre']) : "";
             $descripcion = isset($_POST['descripcion']) ? trim($_POST['descripcion']) : "";
             $nuevoEstado = isset($_POST['nuevo_estado']) ? $_POST['nuevo_estado'] : 2;
+            
+            // Recogemos la rebaja masiva (Si está vacío, no se cambia nada)
+            $descuentoMasivo = isset($_POST['descuento_masivo']) && $_POST['descuento_masivo'] !== "" ? (int)$_POST['descuento_masivo'] : null;
+
             $prodObj = new Producto($conexion);
             $prodObj->actualizarEstadoColeccion($idCol, $nombre, $descripcion, $nuevoEstado);
+            
+            // LA MAGIA: Si has escrito un número de descuento, se lo aplica a todas las prendas de esa colección
+            if (is_numeric($descuentoMasivo)) {
+                $stmtRebaja = $conexion->prepare("UPDATE productos SET rebaja = ? WHERE coleccion_id = ?");
+                $stmtRebaja->execute([$descuentoMasivo, $idCol]);
+            }
+
             header("Location: ../admin/admin.php?seccion=colecciones&mensaje=coleccion_actualizada");
             break;
     }

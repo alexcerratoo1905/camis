@@ -9,13 +9,11 @@ $conexion = $db->conectar();
 $pedidoModel = new Pedido($conexion);
 $productoModel = new Producto($conexion);
 
-// Comprobamos si viene de Stripe o Bizum y si el carrito no está vacío
 if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
     
     // 1. RECALCULAR TODO PARA LA BASE DE DATOS
     $subtotalCheckout = 0;
     $numArticulos = 0;
-
     foreach ($_SESSION['carrito'] as $item) {
         $producto = $productoModel->obtenerProducto($item['idPrenda']);
         $rebaja = isset($producto['rebaja']) ? (int)$producto['rebaja'] : 0;
@@ -42,15 +40,20 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
     $factorMultiplicador = 1 - ($porcentajeFinal / 100);
     $descuentoCantidad = $subtotalCheckout * ($porcentajeFinal / 100);
 
+    // NUEVOS GASTOS DE ENVÍO
     $envio = 0;
-    if ($numArticulos == 1) $envio = 5.00;
-    elseif ($numArticulos == 2) $envio = 4.00;
-    elseif ($numArticulos == 3) $envio = 3.00;
-    elseif ($numArticulos == 4) $envio = 2.00;
+    if ($numArticulos == 1) {
+        $envio = 4.99;
+    } elseif ($numArticulos == 2 || $numArticulos == 3) {
+        $envio = 2.99;
+    } elseif ($numArticulos == 4) {
+        $envio = 1.99;
+    } else {
+        $envio = 0.00; // GRATIS a partir de 5
+    }
 
     $totalFinalFactura = ($subtotalCheckout - $descuentoCantidad) + $envio;
     
-    // Recuperar la dirección que guardamos temporalmente en el pagoController
     $direccionPedido = $_SESSION['direccion_pedido_temporal'] ?? 'Dirección no especificada';
 
     // 2. CREAR LA CABECERA DEL PEDIDO
@@ -65,6 +68,10 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         $extraPrecio = 0;
         $textoExtrasArray = [];
         
+        // LA MAGIA: Guardar la versión de la prenda (Hombre, Mujer, Niño)
+        $versionElegida = isset($item['version_genero']) ? ucfirst($item['version_genero']) : 'Hombre';
+        $textoExtrasArray[] = "Versión " . $versionElegida;
+        
         if (!empty($item['extra_player'])) { $extraPrecio += 3; $textoExtrasArray[] = "Player"; }
         if (!empty($item['extra_pantalon'])) { $extraPrecio += 10; $textoExtrasArray[] = "+Pantalón"; }
         if (!empty($item['tiene_parche'])) { $extraPrecio += 1; $textoExtrasArray[] = "Parche: " . $item['texto_parche']; }
@@ -73,7 +80,6 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         
         $precioUnitarioFinal = $precioBase + $extraPrecio;
         $precioUnitarioDescontado = $precioUnitarioFinal * $factorMultiplicador;
-
         $stringExtras = empty($textoExtrasArray) ? null : implode(" | ", $textoExtrasArray);
 
         $pedidoModel->crearDetallesPedidos(
@@ -95,7 +101,6 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
 
 include './includes/header.php';
 ?>
-
 <main id="graciasCompra" class="container my-5 py-5 mt-5 d-flex justify-content-center align-items-center" style="min-height: 60vh;">
     <div class="card border-dark border-3 rounded-0 shadow-lg text-center p-5" style="max-width: 600px;">
         <div class="card-body">
@@ -118,7 +123,6 @@ include './includes/header.php';
 </main>
 
 <script>
-    // Esperar 3 segundos y redirigir al perfil para que vea su pedido nuevo
     setTimeout(function() {
         window.location.href = 'perfil.php?seccion=pedidos';
     }, 3000);
