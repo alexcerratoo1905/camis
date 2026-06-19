@@ -82,7 +82,7 @@ include './includes/header.php';
                                         <p class="text-muted small mb-1">Color: <?php echo $item['color_nombre']; ?> | Talla: <?php echo $item['talla']; ?></p>
 
                                         <ul class="list-unstyled mt-1 mb-0 small text-muted fst-italic">
-                                            <?php if (isset($item['version_genero']) && $item['version_genero'] != 'hombre'): ?><li>Versión: <?php echo ucfirst($item['version_genero']); ?></li><?php endif; ?>
+                                            <li><span class="badge bg-dark rounded-0 fw-bold">Versión: <?php echo ucfirst($item['version_genero'] ?? 'Hombre'); ?></span></li>
                                             <?php if ($item['extra_player']): ?><li>+ Versión Player</li><?php endif; ?>
                                             <?php if ($item['extra_pantalon']): ?><li>+ Pantalón a juego</li><?php endif; ?>
                                             <?php if ($item['tiene_parche']): ?><li>+ Parches: <?= htmlspecialchars($item['texto_parche']) ?></li><?php endif; ?>
@@ -129,7 +129,6 @@ include './includes/header.php';
                 <div class="card border-0 shadow-sm rounded-0 p-4 bg-light">
                     <h4 class="fw-bold text-uppercase mb-4">Resumen</h4>
                     <?php
-                    // -------- LÓGICA DE ENVÍO ACTUALIZADA ---------
                     $envio = 0;
                     if ($numArticulos == 1) {
                         $envio = 4.99;
@@ -138,10 +137,9 @@ include './includes/header.php';
                     } elseif ($numArticulos == 4) {
                         $envio = 1.99;
                     } else {
-                        $envio = 0.00; // GRATIS a partir de 5
+                        $envio = 0.00;
                     }
 
-                    // 2. Descuentos Automáticos
                     $porcentajeAuto = 0;
                     if ($numArticulos >= 5 || $subtotalCarrito > 120) {
                         $porcentajeAuto = 15;
@@ -149,12 +147,9 @@ include './includes/header.php';
                         $porcentajeAuto = 10;
                     }
 
-                    // 3. Descuento del Código Promocional
                     $porcentajeManual = isset($_SESSION['descuento']) ? (int)$_SESSION['descuento']['porcentaje'] : 0;
                     $porcentajeFinal = max($porcentajeAuto, $porcentajeManual);
                     $descuentoCantidad = $subtotalCarrito * ($porcentajeFinal / 100);
-
-                    // 4. Total Final
                     $totalFinal = ($subtotalCarrito - $descuentoCantidad) + $envio;
                     ?>
 

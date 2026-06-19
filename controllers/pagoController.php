@@ -1,13 +1,12 @@
 <?php
 session_start();
 
-// Requerir dependencias (Autoload de Composer donde está Stripe)
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../models/producto.php';
 
 // =========================================================================
-// ¡IMPORTANTE! PON AQUÍ TU CLAVE SECRETA DE STRIPE (sk_test_...)
+// ¡PON AQUÍ TU CLAVE SECRETA DE STRIPE (sk_test_...)
 // =========================================================================
 \Stripe\Stripe::setApiKey('sk_test_51TRSRfHJPlhS3OiOmWvQ9M4K1TuNPsHDsBNsV9l99ziXgumDDGjjQtGNQNprptcmSqS0QYrdrGx4AMaOr2HAcy5o006E97tSH6');
 
@@ -15,7 +14,6 @@ $db = new Database();
 $conexion = $db->conectar();
 $productoModel = new Producto($conexion);
 
-// Si deciden pagar con Bizum, nos saltamos Stripe y vamos a la pantalla final
 $metodoPago = $_POST['metodo_pago'] ?? 'tarjeta';
 if ($metodoPago === 'bizum') {
     header('Location: ../gracias.php?metodo=bizum');
@@ -27,9 +25,6 @@ if (!isset($_SESSION['carrito']) || empty($_SESSION['carrito'])) {
     exit;
 }
 
-// =========================================================================
-// 1. RECALCULAR EL CARRITO (Para que nadie hackee el precio por HTML)
-// =========================================================================
 $subtotalCheckout = 0;
 $numArticulos = 0;
 
@@ -50,9 +45,6 @@ foreach ($_SESSION['carrito'] as $item) {
     $numArticulos += $item['cantidad'];
 }
 
-// =========================================================================
-// 2. DESCUENTOS Y REGLAS DE ENVÍO
-// =========================================================================
 $porcentajeAuto = 0;
 if ($numArticulos >= 5 || $subtotalCheckout > 120) {
     $porcentajeAuto = 15;
@@ -64,15 +56,16 @@ $porcentajeFinal = max($porcentajeAuto, $porcentajeManual);
 $factorMultiplicador = 1 - ($porcentajeFinal / 100);
 
 $envio = 0;
-if ($numArticulos == 1) $envio = 5.00;
-elseif ($numArticulos == 2) $envio = 4.00;
-elseif ($numArticulos == 3) $envio = 3.00;
-elseif ($numArticulos == 4) $envio = 2.00;
-else $envio = 0.00;
+if ($numArticulos == 1) {
+    $envio = 4.99;
+} elseif ($numArticulos == 2 || $numArticulos == 3) {
+    $envio = 2.99;
+} elseif ($numArticulos == 4) {
+    $envio = 1.99;
+} else {
+    $envio = 0.00;
+}
 
-// =========================================================================
-// 3. MONTAR LOS PRODUCTOS PARA LA PASARELA DE STRIPE
-// =========================================================================
 $lineItems = [];
 
 foreach ($_SESSION['carrito'] as $item) {
@@ -81,7 +74,11 @@ foreach ($_SESSION['carrito'] as $item) {
     $precioBase = $producto['precio'] - ($producto['precio'] * $rebaja / 100);
     
     $extraPrecio = 0;
-    $detalles = "Talla: " . $item['talla'];
+    
+    // AÑADIMOS LA VERSIÓN AL TICKET DE STRIPE
+    $versionElegida = isset($item['version_genero']) ? ucfirst($item['version_genero']) : 'Hombre';
+    $detalles = "Versión: " . $versionElegida . " | Talla: " . $item['talla'];
+    
     if (!empty($item['extra_player'])) { $extraPrecio += 3; $detalles .= " | Player"; }
     if (!empty($item['extra_pantalon'])) { $extraPrecio += 10; $detalles .= " | +Pantalón"; }
     if (!empty($item['tiene_parche'])) { $extraPrecio += 1; $detalles .= " | Parches"; }
@@ -89,8 +86,7 @@ foreach ($_SESSION['carrito'] as $item) {
     if (in_array($item['talla'], ['2XL', '3XL', '4XL'])) $extraPrecio += 1;
     
     $precioUnitarioFinal = $precioBase + $extraPrecio;
-    // Aplicamos el descuento promocional a la prenda antes de enviarla a Stripe
-    $precioConDescuento = round(($precioUnitarioFinal * $factorMultiplicador) * 100); // Stripe necesita céntimos
+    $precioConDescuento = round(($precioUnitarioFinal * $factorMultiplicador) * 100); 
     
     if ($porcentajeFinal > 0) {
         $detalles .= " (-$porcentajeFinal% Dcto)";
@@ -109,7 +105,6 @@ foreach ($_SESSION['carrito'] as $item) {
     ];
 }
 
-// Añadir el envío como producto si no es gratis
 if ($envio > 0) {
     $lineItems[] = [
         'price_data' => [
@@ -124,15 +119,10 @@ if ($envio > 0) {
     ];
 }
 
-// Guardamos la dirección generada en Checkout temporalmente 
-// (Por si la necesitas insertar en la Base de Datos al volver de Stripe)
 if (isset($_POST['direccionEnvio'])) {
     $_SESSION['direccion_pedido_temporal'] = $_POST['direccionEnvio'];
 }
 
-// =========================================================================
-// 4. CREAR LA SESIÓN DE STRIPE Y REDIRIGIR
-// =========================================================================
 try {
     $protocolo = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
     $dominio = $protocolo . "://" . $_SERVER['HTTP_HOST'];

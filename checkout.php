@@ -100,7 +100,7 @@ include './includes/header.php';
                                     <div class="text-truncate pe-2" style="flex: 1; min-width: 0;">
                                         <span class="fw-bold"><?php echo $item['cantidad']; ?>x</span>
                                         <?php echo $producto['nombre']; ?>
-                                        <span class="text-muted">(<?php echo $item['talla']; ?>)</span>
+                                        <span class="text-muted">(<?php echo $item['talla']; ?> | Versión: <?php echo ucfirst($item['version_genero'] ?? 'Hombre'); ?>)</span>
                                     </div>
                                     <div class="text-nowrap text-end flex-shrink-0 ps-2">
                                         <span class="fw-bold d-block"><?php echo number_format($subtotalItem, 2); ?> €</span>
@@ -113,7 +113,6 @@ include './includes/header.php';
                     </div>
 
                     <?php
-                    // -------- LÓGICA DE ENVÍO ACTUALIZADA ---------
                     $envio = 0;
                     if ($numArticulos == 1) {
                         $envio = 4.99;
@@ -122,7 +121,7 @@ include './includes/header.php';
                     } elseif ($numArticulos == 4) {
                         $envio = 1.99;
                     } else {
-                        $envio = 0.00; // GRATIS a partir de 5
+                        $envio = 0.00;
                     }
 
                     $porcentajeAuto = 0;
@@ -164,7 +163,6 @@ include './includes/header.php';
                         <span class="fw-bold fs-3"><?php echo number_format($totalFinalCheckout, 2); ?> €</span>
                     </div>
 
-                    <!-- Campos ocultos para Stripe -->
                     <input type="hidden" name="totalPedido" value="<?php echo $totalFinalCheckout; ?>">
                     <input type="hidden" name="direccionEnvio" id="direccionEnvioFinal" value="">
                     

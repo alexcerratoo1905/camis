@@ -11,7 +11,6 @@ $productoModel = new Producto($conexion);
 
 if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
     
-    // 1. RECALCULAR TODO PARA LA BASE DE DATOS
     $subtotalCheckout = 0;
     $numArticulos = 0;
     foreach ($_SESSION['carrito'] as $item) {
@@ -40,7 +39,6 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
     $factorMultiplicador = 1 - ($porcentajeFinal / 100);
     $descuentoCantidad = $subtotalCheckout * ($porcentajeFinal / 100);
 
-    // NUEVOS GASTOS DE ENVÍO
     $envio = 0;
     if ($numArticulos == 1) {
         $envio = 4.99;
@@ -49,17 +47,14 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
     } elseif ($numArticulos == 4) {
         $envio = 1.99;
     } else {
-        $envio = 0.00; // GRATIS a partir de 5
+        $envio = 0.00; 
     }
 
     $totalFinalFactura = ($subtotalCheckout - $descuentoCantidad) + $envio;
-    
     $direccionPedido = $_SESSION['direccion_pedido_temporal'] ?? 'Dirección no especificada';
 
-    // 2. CREAR LA CABECERA DEL PEDIDO
     $idNuevoPedido = $pedidoModel->crearPedido($_SESSION['usuario_id'], $totalFinalFactura, $direccionPedido);
 
-    // 3. METER CADA LÍNEA (CAMISETA) DENTRO DE ESE PEDIDO
     foreach ($_SESSION['carrito'] as $item) {
         $producto = $productoModel->obtenerProducto($item['idPrenda']);
         $rebaja = isset($producto['rebaja']) ? (int)$producto['rebaja'] : 0;
@@ -68,9 +63,9 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         $extraPrecio = 0;
         $textoExtrasArray = [];
         
-        // LA MAGIA: Guardar la versión de la prenda (Hombre, Mujer, Niño)
+        // LA MAGIA DE VERDAD QUE GUARDA EN LA BASE DE DATOS
         $versionElegida = isset($item['version_genero']) ? ucfirst($item['version_genero']) : 'Hombre';
-        $textoExtrasArray[] = "Versión " . $versionElegida;
+        $textoExtrasArray[] = "Versión: " . $versionElegida;
         
         if (!empty($item['extra_player'])) { $extraPrecio += 3; $textoExtrasArray[] = "Player"; }
         if (!empty($item['extra_pantalon'])) { $extraPrecio += 10; $textoExtrasArray[] = "+Pantalón"; }
@@ -93,7 +88,6 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         );
     }
 
-    // 4. VACIAR EL CARRITO Y LAS VARIABLES TEMPORALES
     unset($_SESSION['carrito']);
     unset($_SESSION['descuento']);
     unset($_SESSION['direccion_pedido_temporal']);

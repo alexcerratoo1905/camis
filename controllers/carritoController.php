@@ -14,7 +14,6 @@ $productoModel = new Producto($conexion);
 $imagenModel = new Imagen($conexion);
 $usuarioModel = new Usuario($conexion);
 
-// 1. APLICAR CÓDIGO DE DESCUENTO
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion']) && $_POST['accion'] == 'aplicar_descuento') {
     $codigo = strtoupper(trim($_POST['codigo_descuento']));
     if (isset($_SESSION['usuario_id'])) {
@@ -33,26 +32,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion']) && $_POST['a
     exit;
 }
 
-// 2. QUITAR CÓDIGO DE DESCUENTO
 if (isset($_GET['accion']) && $_GET['accion'] == 'quitar_descuento') {
     unset($_SESSION['descuento']);
     header("Location: ../carrito.php?mensaje=codigo_quitado");
     exit;
 }
 
-// 3. AGREGAR PRENDA AL CARRITO (Desde la Ficha de Producto o desde el Catálogo rápido)
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion']) && $_POST['accion'] == 'agregar') {
     
     $idPrenda = $_POST['idPrenda'];
     $color_id = isset($_POST['color_id']) ? $_POST['color_id'] : (isset($_POST['color']) ? $_POST['color'] : '');
     $cantidad = 1;
-    $origen = isset($_POST['origen']) ? $_POST['origen'] : 'ficha';
-
-    // Recogemos todos los extras del dropshipping
-    $talla = $_POST['talla'] ?? '';
     
-    // --> AQUÍ RECOGEMOS LA NUEVA VARIABLE DE LA VERSIÓN DE GÉNERO
-    $version_genero = isset($_POST['version_genero']) ? $_POST['version_genero'] : 'hombre';
+    $talla = $_POST['talla'] ?? '';
+    $version_genero = isset($_POST['version_genero']) ? $_POST['version_genero'] : 'Hombre';
 
     $extra_player = isset($_POST['extra_player']) ? 1 : 0;
     $extra_pantalon = isset($_POST['extra_pantalon']) ? 1 : 0;
@@ -73,11 +66,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion']) && $_POST['a
 
     $productoEncontrado = false;
     foreach ($_SESSION['carrito'] as &$item) {
-        // Agrupamos en la misma línea del carrito SÓLO si todo (versión, talla, color y todos los extras) es exactamente igual
         if ($item['idPrenda'] == $idPrenda && 
             $item['talla'] == $talla && 
             $item['color_id'] == $color_id &&
-            ($item['version_genero'] ?? 'hombre') == $version_genero && // Comprobación añadida para no mezclar camisetas de niño y hombre
+            ($item['version_genero'] ?? 'Hombre') == $version_genero &&
             ($item['extra_player'] ?? 0) == $extra_player &&
             ($item['extra_pantalon'] ?? 0) == $extra_pantalon &&
             ($item['tiene_parche'] ?? 0) == $tiene_parche &&
@@ -97,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion']) && $_POST['a
             'idPrenda' => $idPrenda,
             'talla' => $talla,
             'color_id' => $color_id,
-            'version_genero' => $version_genero, // <-- AÑADIMOS EL DATO A LA SESIÓN AQUÍ
+            'version_genero' => $version_genero,
             'cantidad' => $cantidad,
             'extra_player' => $extra_player,
             'extra_pantalon' => $extra_pantalon,
@@ -113,7 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion']) && $_POST['a
     exit;
 }
 
-// 4. MODIFICAR CANTIDADES O ELIMINAR DESDE EL CARRITO
 if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['accion']) && isset($_GET['indice'])) {
     $indice = (int)$_GET['indice'];
 
@@ -133,7 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['accion']) && isset($_GET
     exit;
 }
 
-// 5. PREPARAR LOS DATOS PARA MOSTRAR EL CARRITO AL USUARIO
 $carritoActual = isset($_SESSION['carrito']) ? $_SESSION['carrito'] : [];
 $carritoDetallado = [];
 $totalCarrito = 0;
@@ -152,7 +142,6 @@ foreach ($carritoActual as $indice => $item) {
     $rebaja = isset($datosProd['rebaja']) ? (int)$datosProd['rebaja'] : 0;
     $precioBaseRebajado = $datosProd['precio'] - ($datosProd['precio'] * $rebaja / 100);
 
-    // Sumar los costes extra al precio unitario real que pagará el cliente
     $extraPrecio = 0;
     if (!empty($item['extra_player'])) $extraPrecio += 3;
     if (!empty($item['extra_pantalon'])) $extraPrecio += 10;
@@ -176,8 +165,7 @@ foreach ($carritoActual as $indice => $item) {
         'cantidad' => $item['cantidad'],
         'imagen' => $foto,
         'subtotal' => $subtotal,
-        // Pasamos también los extras a la vista para pintarlos
-        'version_genero' => $item['version_genero'] ?? 'hombre', // La versión también va a la vista
+        'version_genero' => $item['version_genero'] ?? 'Hombre',
         'extra_player' => $item['extra_player'] ?? 0,
         'extra_pantalon' => $item['extra_pantalon'] ?? 0,
         'tiene_parche' => $item['tiene_parche'] ?? 0,
