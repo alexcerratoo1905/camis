@@ -158,8 +158,14 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                 <div class="row">
                     <div class="col-12 pb-5 mb-5">
                         <?php
+                        // ====================================================================
+                        // BLINDAJE PHP: TODO EL SWITCH ESTÁ ESTRICTAMENTE DENTRO DE ETIQUETAS
+                        // ====================================================================
                         switch ($seccion) {
                             
+                            // ------------------------------------------
+                            // 1. SECCIÓN PEDIDOS
+                            // ------------------------------------------
                             case 'pedidos':
                                 $listaPedidos = $pedido->listarPedidos();
                         ?>
@@ -322,13 +328,13 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                         <?php
                                 break;
 
-                            // =========================================================
-                            // SECCIÓN PRODUCTOS: 10 PRENDAS EN 2 COLUMNAS + PAGINADOR ARRIBA
-                            // =========================================================
+                            // -----------------------------------------------------------------
+                            // 2. SECCIÓN PRODUCTOS: REJILLA BOOTSTRAP REAL (2 COLUMNAS SIMÉTRICAS)
+                            // -----------------------------------------------------------------
                             case 'productos':
                                 $prod = new Producto($db->conectar());
 
-                                $productosPorPagina = 10; // AHORA ENSEÑA 10 DE GOLPE
+                                $productosPorPagina = 10; 
                                 $paginaActual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
                                 if ($paginaActual < 1) $paginaActual = 1;
 
@@ -476,139 +482,142 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                     <input type="hidden" name="accion" value="actualizarInventarioMasivo">
                                     <input type="hidden" name="pagina_retorno" value="<?php echo $paginaActual; ?>">
 
-                                    <?php if (empty($productosLimpios)) { ?>
+                                    <?php if (empty($columnaIzq) && empty($columnaDer)) { ?>
                                         <div class="alert alert-secondary text-center py-5">No se han encontrado productos.</div>
                                     <?php } else { ?>
                                         
                                         <div class="row g-4">
                                             
-                                            <div class="col-12 col-xl-6">
-                                                <?php foreach ($columnaIzq as $id => $datos) { 
-                                                    $stmtDesc = $conexion->prepare("SELECT descripcion FROM productos WHERE id = ?");
-                                                    $stmtDesc->execute([$id]);
-                                                    $descReal = $stmtDesc->fetchColumn();
-                                                ?>
-                                                    <div class="card mb-4 border-0 shadow-sm admin-card h-100" style="border-left: 6px solid #0dcaf0;">
-                                                        <div class="card-header bg-dark text-white py-3">
-                                                            <div class="row align-items-center g-2">
-                                                                <div class="col-12 col-sm-5">
-                                                                    <div class="d-flex align-items-center gap-1">
-                                                                        <span class="text-secondary fw-bold small">#<?php echo $id; ?></span>
-                                                                        <input type="text" name="nombre[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($datos['nombre']); ?>" class="form-control form-control-sm border-0 bg-secondary text-dark fw-bold text-uppercase w-100" style="letter-spacing: 0.5px; background-color: #f8f9fa;" required>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-4 col-sm-3">
-                                                                    <select name="coleccion[<?php echo $id; ?>]" class="form-select form-select-sm border-0 bg-light text-dark fw-bold w-100" style="font-size: 0.75rem;">
-                                                                        <option value="">Sin Liga</option>
-                                                                        <?php foreach ($listaColeciones as $col) { 
-                                                                            $seleccionado = ($col['id'] == $datos['coleccion_id']) ? 'selected' : '';
-                                                                        ?>
-                                                                            <option value="<?php echo $col['id']; ?>" <?php echo $seleccionado; ?>><?php echo htmlspecialchars($col['nombre']); ?></option>
-                                                                        <?php } ?>
-                                                                    </select>
-                                                                </div>
-                                                                <div class="col-4 col-sm-2">
-                                                                    <div class="input-group input-group-sm">
-                                                                        <input type="number" step="0.01" name="precio[<?php echo $id; ?>]" value="<?php echo $datos['precio']; ?>" class="form-control text-center fw-bold border-0 bg-light text-dark p-1" style="font-size: 0.8rem;">
-                                                                        <span class="input-group-text bg-light border-0 fw-bold text-dark p-1">€</span>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-4 col-sm-2">
-                                                                    <div class="input-group input-group-sm">
-                                                                        <input type="number" name="rebaja[<?php echo $id; ?>]" value="<?php echo $datos['rebaja']; ?>" class="form-control text-center fw-bold p-1" style="font-size: 0.8rem;" min="0" max="100">
-                                                                        <span class="input-group-text bg-secondary text-white border-0 small p-1">%</span>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-12 mt-2">
-                                                                    <div class="d-flex align-items-center justify-content-between">
-                                                                        <div class="input-group input-group-sm me-2">
-                                                                            <span class="input-group-text bg-secondary text-white border-0 small font-monospace">INFO</span>
-                                                                            <input type="text" name="descripcion[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($descReal ?? ''); ?>" class="form-control bg-dark text-white border-0 small" placeholder="Descripción breve">
+                                            <div class="col-12 col-lg-6">
+                                                <div class="d-flex flex-column gap-4">
+                                                    <?php foreach ($columnaIzq as $id => $datos) { 
+                                                        $stmtDesc = $conexion->prepare("SELECT descripcion FROM productos WHERE id = ?");
+                                                        $stmtDesc->execute([$id]);
+                                                        $descReal = $stmtDesc->fetchColumn();
+                                                    ?>
+                                                        <div class="card border-0 shadow-sm admin-card" style="border-left: 6px solid #0dcaf0;">
+                                                            <div class="card-header bg-dark text-white py-3">
+                                                                <div class="row align-items-center g-2">
+                                                                    <div class="col-12 col-sm-5">
+                                                                        <div class="d-flex align-items-center gap-1">
+                                                                            <span class="text-secondary fw-bold small">#<?php echo $id; ?></span>
+                                                                            <input type="text" name="nombre[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($datos['nombre']); ?>" class="form-control form-control-sm border-0 bg-secondary text-dark fw-bold text-uppercase w-100" style="letter-spacing: 0.5px; background-color: #f8f9fa;" required>
                                                                         </div>
-                                                                        <select name="activo[<?php echo $id; ?>]" class="form-select form-select-sm fw-bold border-0 w-auto <?php echo ($datos['activo'] == 1 ? 'text-success' : 'text-danger'); ?>">
-                                                                            <option value="1" <?php echo ($datos['activo'] == 1 ? 'selected' : ''); ?>>ACT</option>
-                                                                            <option value="0" <?php echo ($datos['activo'] == 0 ? 'selected' : ''); ?>>OCU</option>
+                                                                    </div>
+                                                                    <div class="col-4 col-sm-3">
+                                                                        <select name="coleccion[<?php echo $id; ?>]" class="form-select form-select-sm border-0 bg-light text-dark fw-bold w-100" style="font-size: 0.75rem;">
+                                                                            <option value="">Sin Liga</option>
+                                                                            <?php foreach ($listaColeciones as $col) { 
+                                                                                $seleccionado = ($col['id'] == $datos['coleccion_id']) ? 'selected' : '';
+                                                                            ?>
+                                                                                <option value="<?php echo $col['id']; ?>" <?php echo $seleccionado; ?>><?php echo htmlspecialchars($col['nombre']); ?></option>
+                                                                            <?php } ?>
                                                                         </select>
                                                                     </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="card-body bg-white border border-top-0 border-light p-3 d-flex flex-column justify-content-between">
-                                                            <ul class="nav nav-tabs nav-tabs-scroll" role="tablist">
-                                                                <?php 
-                                                                $vIndex = 0;
-                                                                foreach($datos['variantes'] as $color_id => $var): 
-                                                                    $isActive = ($vIndex == 0) ? 'active' : '';
-                                                                ?>
-                                                                <li class="nav-item flex-shrink-0" role="presentation">
-                                                                    <button class="nav-link text-dark text-uppercase <?= $isActive ?>" data-bs-toggle="tab" data-bs-target="#variante-<?= $id ?>-<?= $color_id ?>" type="button" role="tab">
-                                                                        <i class="bi bi-tag-fill me-1"></i> <?= htmlspecialchars($var['equipacion']) ?>
-                                                                    </button>
-                                                                </li>
-                                                                <?php $vIndex++; endforeach; ?>
-                                                                
-                                                                <li class="nav-item ms-auto flex-shrink-0">
-                                                                    <button type="button" class="btn btn-sm btn-warning fw-bold text-dark mt-1 mx-1" data-bs-toggle="modal" data-bs-target="#modalVariante<?= $id ?>">
-                                                                        <i class="bi bi-plus-circle-fill"></i> Variante
-                                                                    </button>
-                                                                </li>
-                                                            </ul>
-
-                                                            <div class="tab-content mt-3">
-                                                                <?php 
-                                                                $vIndex = 0;
-                                                                foreach($datos['variantes'] as $color_id => $var): 
-                                                                    $isActive = ($vIndex == 0) ? 'show active' : '';
-                                                                    
-                                                                    $stmtFotos = $conexion->prepare("SELECT id, url_imagen FROM imagenes_productos WHERE producto_id = ? AND color_id = ?");
-                                                                    $stmtFotos->execute([$id, $color_id]);
-                                                                    $fotosProducto = $stmtFotos->fetchAll(PDO::FETCH_ASSOC);
-                                                                ?>
-                                                                <div class="tab-pane fade <?= $isActive ?>" id="variante-<?= $id ?>-<?= $color_id ?>" role="tabpanel">
-                                                                    <div class="d-flex flex-wrap align-items-center bg-light p-2 rounded border border-light gap-2">
-                                                                        <?php foreach ($fotosProducto as $ft) { ?>
-                                                                            <div class="crm-thumb-container m-0">
-                                                                                <img src="../<?= htmlspecialchars($ft['url_imagen']); ?>" class="crm-thumb shadow-sm">
-                                                                                <a href="../controllers/adminController.php?accion=borrarFotoEspecifica&id_foto=<?= $ft['id']; ?>&p_id=<?= $id; ?>&pag=<?= $paginaActual; ?>" class="btn-borrar-foto" onclick="return confirm('¿Borrar foto?');">×</a>
+                                                                    <div class="col-4 col-sm-2">
+                                                                        <div class="input-group input-group-sm">
+                                                                            <input type="number" step="0.01" name="precio[<?php echo $id; ?>]" value="<?php echo $datos['precio']; ?>" class="form-control text-center fw-bold border-0 bg-light text-dark p-1" style="font-size: 0.8rem;">
+                                                                            <span class="input-group-text bg-light border-0 fw-bold text-dark p-1">€</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-4 col-sm-2">
+                                                                        <div class="input-group input-group-sm">
+                                                                            <input type="number" name="rebaja[<?php echo $id; ?>]" value="<?php echo $datos['rebaja']; ?>" class="form-control text-center fw-bold p-1" style="font-size: 0.8rem;" min="0" max="100">
+                                                                            <span class="input-group-text bg-secondary text-white border-0 small p-1">%</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-12 mt-2">
+                                                                        <div class="d-flex align-items-center justify-content-between">
+                                                                            <div class="input-group input-group-sm me-2">
+                                                                                <span class="input-group-text bg-secondary text-white border-0 small font-monospace">INFO</span>
+                                                                                <input type="text" name="descripcion[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($descReal ?? ''); ?>" class="form-control bg-dark text-white border-0 small" placeholder="Descripción breve">
                                                                             </div>
-                                                                        <?php } ?>
-                                                                        <button type="button" class="btn btn-outline-secondary bg-white shadow-sm d-flex align-items-center justify-content-center p-0" style="height: 55px; width: 55px; border-style: dashed; border-width: 2px;" onclick="document.getElementById('add-foto-input-<?= $id ?>-<?= $color_id ?>').click();" title="Añadir foto">
-                                                                            <i class="bi bi-plus-lg fs-5 text-dark"></i>
-                                                                        </button>
+                                                                            <select name="activo[<?php echo $id; ?>]" class="form-select form-select-sm fw-bold border-0 w-auto <?php echo ($datos['activo'] == 1 ? 'text-success' : 'text-danger'); ?>">
+                                                                                <option value="1" <?php echo ($datos['activo'] == 1 ? 'selected' : ''); ?>>ACT</option>
+                                                                                <option value="0" <?php echo ($datos['activo'] == 0 ? 'selected' : ''); ?>>OCU</option>
+                                                                            </select>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                                <?php $vIndex++; endforeach; ?>
+                                                            </div>
+
+                                                            <div class="card-body bg-white border border-top-0 border-light p-3">
+                                                                <ul class="nav nav-tabs nav-tabs-scroll" role="tablist">
+                                                                    <?php 
+                                                                    $vIndex = 0;
+                                                                    foreach($datos['variantes'] as $color_id => $var): 
+                                                                        $isActive = ($vIndex == 0) ? 'active' : '';
+                                                                    ?>
+                                                                    <li class="nav-item flex-shrink-0" role="presentation">
+                                                                        <button class="nav-link text-dark text-uppercase <?= $isActive ?>" data-bs-toggle="tab" data-bs-target="#variante-<?= $id ?>-<?= $color_id ?>" type="button" role="tab">
+                                                                            <i class="bi bi-tag-fill me-1"></i> <?= htmlspecialchars($var['equipacion']) ?>
+                                                                        </button>
+                                                                    </li>
+                                                                    <?php $vIndex++; endforeach; ?>
+                                                                    
+                                                                    <li class="nav-item ms-auto flex-shrink-0">
+                                                                        <button type="button" class="btn btn-sm btn-warning fw-bold text-dark mt-1 mx-1" data-bs-toggle="modal" data-bs-target="#modalVariante<?= $id ?>">
+                                                                            <i class="bi bi-plus-circle-fill"></i> Variante
+                                                                        </button>
+                                                                    </li>
+                                                                </ul>
+
+                                                                <div class="tab-content mt-3">
+                                                                    <?php 
+                                                                    $vIndex = 0;
+                                                                    foreach($datos['variantes'] as $color_id => $var): 
+                                                                        $isActive = ($vIndex == 0) ? 'show active' : '';
+                                                                        
+                                                                        $stmtFotos = $conexion->prepare("SELECT id, url_imagen FROM imagenes_productos WHERE producto_id = ? AND color_id = ?");
+                                                                        $stmtFotos->execute([$id, $color_id]);
+                                                                        $fotosProducto = $stmtFotos->fetchAll(PDO::FETCH_ASSOC);
+                                                                    ?>
+                                                                    <div class="tab-pane fade <?= $isActive ?>" id="variante-<?= $id ?>-<?= $color_id ?>" role="tabpanel">
+                                                                        <div class="d-flex flex-wrap align-items-center bg-light p-2 rounded border border-light gap-2">
+                                                                            <?php foreach ($fotosProducto as $ft) { ?>
+                                                                                <div class="crm-thumb-container m-0">
+                                                                                    <img src="../<?= htmlspecialchars($ft['url_imagen']); ?>" class="crm-thumb shadow-sm">
+                                                                                    <a href="../controllers/adminController.php?accion=borrarFotoEspecifica&id_foto=<?= $ft['id']; ?>&p_id=<?= $id; ?>&pag=<?= $paginaActual; ?>" class="btn-borrar-foto" onclick="return confirm('¿Borrar foto?');">×</a>
+                                                                                </div>
+                                                                            <?php } ?>
+                                                                            <button type="button" class="btn btn-outline-secondary bg-white shadow-sm d-flex align-items-center justify-content-center p-0" style="height: 55px; width: 55px; border-style: dashed; border-width: 2px;" onclick="document.getElementById('add-foto-input-<?= $id ?>-<?= $color_id ?>').click();" title="Añadir foto">
+                                                                                <i class="bi bi-plus-lg fs-5 text-dark"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <?php $vIndex++; endforeach; ?>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                <?php } ?>
+                                                    <?php } ?>
+                                                </div>
                                             </div>
 
-                                            <div class="col-12 col-xl-6">
-                                                <?php foreach ($columnaDer as $id => $datos) { 
-                                                    $stmtDesc = $conexion->prepare("SELECT descripcion FROM productos WHERE id = ?");
-                                                    $stmtDesc->execute([$id]);
-                                                    $descReal = $stmtDesc->fetchColumn();
-                                                ?>
-                                                    <div class="card mb-4 border-0 shadow-sm admin-card h-100" style="border-left: 6px solid #0dcaf0;">
-                                                        <div class="card-header bg-dark text-white py-3">
-                                                            <div class="row align-items-center g-2">
-                                                                <div class="col-12 col-sm-5">
-                                                                    <div class="d-flex align-items-center gap-1">
-                                                                        <span class="text-secondary fw-bold small">#<?php echo $id; ?></span>
-                                                                        <input type="text" name="nombre[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($datos['nombre']); ?>" class="form-control form-control-sm border-0 bg-secondary text-dark fw-bold text-uppercase w-100" style="letter-spacing: 0.5px; background-color: #f8f9fa;" required>
+                                            <div class="col-12 col-lg-6">
+                                                <div class="d-flex flex-column gap-4">
+                                                    <?php foreach ($columnaDer as $id => $datos) { 
+                                                        $stmtDesc = $conexion->prepare("SELECT descripcion FROM productos WHERE id = ?");
+                                                        $stmtDesc->execute([$id]);
+                                                        $descReal = $stmtDesc->fetchColumn();
+                                                    ?>
+                                                        <div class="card border-0 shadow-sm admin-card" style="border-left: 6px solid #0dcaf0;">
+                                                            <div class="card-header bg-dark text-white py-3">
+                                                                <div class="row align-items-center g-2">
+                                                                    <div class="col-12 col-sm-5">
+                                                                        <div class="d-flex align-items-center gap-1">
+                                                                            <span class="text-secondary fw-bold small">#<?php echo $id; ?></span>
+                                                                            <input type="text" name="nombre[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($datos['nombre']); ?>" class="form-control form-control-sm border-0 bg-secondary text-dark fw-bold text-uppercase w-100" style="letter-spacing: 0.5px; background-color: #f8f9fa;" required>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                                <div class="col-4 col-sm-3">
-                                                                    <select name="coleccion[<?php echo $id; ?>]" class="form-select form-select-sm border-0 bg-light text-dark fw-bold w-100" style="font-size: 0.75rem;">
-                                                                        <option value="">Sin Liga</option>
-                                                                        <?php foreach ($listaColeciones as $col) { 
-                                                                            $seleccionado = ($col['id'] == $datos['coleccion_id']) ? 'selected' : '';
-                                                                        ?>
-                                                                            <option value="<?php echo $col['id']; ?>" <?php echo $seleccionado; ?>><?php echo htmlspecialchars($col['nombre']); ?></option>
-                                                                        <?php } ?>
-                                                                    </select>
+                                                                    <div class="col-4 col-sm-3">
+                                                                        <select name="coleccion[<?php echo $id; ?>]" class="form-select form-select-sm border-0 bg-light text-dark fw-bold w-100" style="font-size: 0.75rem;">
+                                                                            <option value="">Sin Liga</option>
+                                                                            <?php foreach ($listaColeciones as $col) { 
+                                                                                $seleccionado = ($col['id'] == $datos['coleccion_id']) ? 'selected' : '';
+                                                                            ?>
+                                                                                <option value="<?php echo $col['id']; ?>" <?php echo $seleccionado; ?>><?php echo htmlspecialchars($col['nombre']); ?></option>
+                                                                            <?php } ?>
+                                                                        </select>
                                                                 </div>
                                                                 <div class="col-4 col-sm-2">
                                                                     <div class="input-group input-group-sm">
@@ -637,7 +646,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                             </div>
                                                         </div>
 
-                                                        <div class="card-body bg-white border border-top-0 border-light p-3 d-flex flex-column justify-content-between">
+                                                        <div class="card-body bg-white border border-top-0 border-light p-3">
                                                             <ul class="nav nav-tabs nav-tabs-scroll" role="tablist">
                                                                 <?php 
                                                                 $vIndex = 0;
@@ -686,6 +695,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                         </div>
                                                     </div>
                                                 <?php } ?>
+                                                </div>
                                             </div>
 
                                         </div>
@@ -759,12 +769,13 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
 
                         <?php break; ?>
                         
-                            // ==============================================================
-                            // SECCIÓN COLECCIONES: BOTÓN DE BORRAR CON WINDOWS ALERT AÑADIDO
-                            // ==============================================================
+                            <?php
+                            // ------------------------------------------
+                            // 3. SECCIÓN COLECCIONES / CATEGORÍAS
+                            // ------------------------------------------
                             case 'colecciones':
                                 $todasLasColecciones = $producto->listarColecciones(true);
-                        ?>
+                            ?>
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <h3>Gestión de Ligas / Categorías</h3>
                                     <button class="btn btn-admin-black px-3 py-2" type="button" data-bs-toggle="collapse" data-bs-target="#formNuevaColeccion">
@@ -852,9 +863,9 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                         </tbody>
                                     </table>
                                 </div>
-                        <?php break; ?>
+                            <?php 
+                                break;
                         
-                            <?php
                             case 'segundaMano':
                             case 'usuarios':
                             case 'looks':
