@@ -23,6 +23,25 @@ if (!empty($accion)) {
 
     switch ($accion) {
         
+        // ====================================================
+        // NUEVO: BORRAR CATEGORÍA DIRECTAMENTE DE LA BBDD
+        // ====================================================
+        case 'borrarColeccion':
+            $idCol = (int)($_GET['id'] ?? 0);
+            if ($idCol > 0) {
+                try {
+                    $stmt = $conexion->prepare("DELETE FROM colecciones WHERE id = ?");
+                    $stmt->execute([$idCol]);
+                    header("Location: ../admin/admin.php?seccion=colecciones&mensaje=coleccion_borrada");
+                    exit();
+                } catch (Exception $e) {
+                    die("Error crítico al borrar la categoría: " . $e->getMessage());
+                }
+            }
+            header("Location: ../admin/admin.php?seccion=colecciones&error=1");
+            exit();
+            break;
+
         case 'anadirEquipacionExtra':
             $producto_id = (int)$_POST['producto_id'];
             $equipacion = $_POST['equipacion']; 
@@ -288,7 +307,6 @@ if (!empty($accion)) {
             $prodObj = new Producto($conexion);
             $prodObj->actualizarEstadoColeccion($idCol, $nombre, $descripcion, $nuevoEstado);
             
-            // LA MAGIA: Aplica estrictamente el descuento a las prendas de ESA colección
             if ($descuentoMasivo !== null) {
                 $stmtRebaja = $conexion->prepare("UPDATE productos SET rebaja = ? WHERE coleccion_id = ?");
                 $stmtRebaja->execute([$descuentoMasivo, $idCol]);

@@ -87,6 +87,7 @@ function seleccionarColor(colorId, elementoClicado) {
     if (mainProducto) {
         mainProducto.dataset.colorPrenda = colorId;
         if (primeraVisible) mainProducto.dataset.imagen = primeraVisible.src;
+        // AQUÍ ES DONDE LLAMA A LA FUNCIÓN QUE AHORA SÍ EXISTE ABAJO
         if (typeof guardarPrendasRecientes === "function") guardarPrendasRecientes();
     }
 }
@@ -113,7 +114,6 @@ function calcularPrecioFinal() {
     if(checkParche && checkParche.checked) extras += 1;
     if(checkPers && checkPers.checked) extras += 2;
     
-    // Tallas especiales cuestan +1€
     if(selectTalla && selectTalla.value) {
         if(['2XL', '3XL', '4XL'].includes(selectTalla.value)) {
             extras += 1;
@@ -134,7 +134,6 @@ document.addEventListener("DOMContentLoaded", function () {
     let colorInicial = colorIdUrl ? document.querySelector('.color-swatch-wrapper[data-color-id="' + colorIdUrl + '"]') : document.querySelector('.color-swatch-wrapper');
     if (colorInicial) seleccionarColor(colorInicial.getAttribute('data-color-id'), colorInicial);
 
-    // Eventos de cálculo de precio
     document.querySelectorAll('.extra-checkbox').forEach(cb => {
         cb.addEventListener('change', calcularPrecioFinal);
     });
@@ -142,7 +141,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const selectTalla = document.getElementById('talla');
     if(selectTalla) selectTalla.addEventListener('change', calcularPrecioFinal);
 
-    // Desplegables de textos de personalización
     const checkParche = document.getElementById('tiene_parche');
     const divParche = document.getElementById('div_texto_parche');
     if(checkParche) {
@@ -219,4 +217,55 @@ if (typeof gsap !== 'undefined' && typeof MorphSVGPlugin !== 'undefined') {
             setTimeout(() => { button.closest('form').submit(); }, 1900);
         });
     });
+}
+
+// ====================================================================
+// FUNCIÓN RECUPERADA: GUARDAR PRENDAS VISTAS EN EL LOCALSTORAGE
+// ====================================================================
+function guardarPrendasRecientes() {
+    const main = document.getElementById("mainProducto");
+    if (!main) return;
+
+    const id = main.dataset.id;
+    const nombre = main.dataset.nombre;
+    const precio = main.dataset.precio;
+    const rebaja = main.dataset.rebaja || "0";
+    const imagen = main.dataset.imagen;
+    const colorPrenda = main.dataset.colorPrenda;
+
+    if (!id || !imagen || !colorPrenda) return;
+
+    let recientes = [];
+    try {
+        recientes = JSON.parse(localStorage.getItem("prendasRecientes")) || [];
+    } catch (e) {
+        recientes = [];
+    }
+
+    const nuevaPrenda = {
+        id: id,
+        nombre: nombre,
+        precio: precio,
+        rebaja: rebaja,
+        imagen: imagen,
+        colorPrenda: colorPrenda
+    };
+
+    // Evitar duplicados de la misma prenda con el mismo color
+    recientes = recientes.filter(p => !(p.id === id && p.colorPrenda === colorPrenda));
+
+    // Poner la nueva prenda la primera de la lista
+    recientes.unshift(nuevaPrenda);
+
+    // Limitar a un máximo de 12 prendas guardadas en el historial
+    if (recientes.length > 12) {
+        recientes.pop();
+    }
+
+    localStorage.setItem("prendasRecientes", JSON.stringify(recientes));
+
+    // Refrescar el carrusel de abajo automáticamente
+    if (typeof pintarPrendasRecientes === "function") {
+        pintarPrendasRecientes();
+    }
 }
