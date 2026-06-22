@@ -63,15 +63,12 @@ include './includes/header.php';
                 <?php foreach ($carritoDetallado as $item) { ?>
                     <div class="card border-0 border-bottom rounded-0 mb-3 pb-3">
                         <div class="row g-0">
-
                             <div class="col-4 col-md-2">
                                 <a href="fichaProducto.php?idPrenda=<?php echo $item['idPrenda']; ?>&color=<?php echo $item['color_id']; ?>">
                                     <img src="<?php echo $item['imagen']; ?>" class="img-fluid w-100 object-fit-cover" style="height: 140px;" alt="<?php echo $item['nombre']; ?>">
                                 </a>
                             </div>
-
                             <div class="col-8 col-md-10 px-3 d-flex flex-column justify-content-between">
-
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div class="pe-2">
                                         <h5 class="fw-bold text-uppercase fs-6 mb-1">
@@ -80,7 +77,6 @@ include './includes/header.php';
                                             </a>
                                         </h5>
                                         <p class="text-muted small mb-1">Color: <?php echo $item['color_nombre']; ?> | Talla: <?php echo $item['talla']; ?></p>
-
                                         <ul class="list-unstyled mt-1 mb-0 small text-muted fst-italic">
                                             <li><span class="badge bg-dark rounded-0 fw-bold">Versión: <?php echo ucfirst($item['version_genero'] ?? 'Hombre'); ?></span></li>
                                             <?php if ($item['extra_player']): ?><li>+ Versión Player</li><?php endif; ?>
@@ -89,7 +85,6 @@ include './includes/header.php';
                                             <?php if ($item['tiene_personalizacion']): ?><li>+ Nombre: <?= htmlspecialchars($item['texto_nombre']) ?> | Nº: <?= htmlspecialchars($item['texto_numero']) ?></li><?php endif; ?>
                                         </ul>
                                     </div>
-
                                     <div class="text-end d-none d-md-block">
                                         <?php if ($item['rebaja'] > 0) { ?>
                                             <span class="text-muted text-decoration-line-through small"><?php echo number_format($item['precio_original'] * $item['cantidad'], 2); ?> €</span><br>
@@ -100,7 +95,6 @@ include './includes/header.php';
                                         <?php } ?>
                                     </div>
                                 </div>
-
                                 <div class="d-flex justify-content-between align-items-end mt-2 mt-md-0">
                                     <div class="d-flex align-items-center gap-2 gap-md-3">
                                         <div class="d-flex align-items-center border border-dark rounded-0">
@@ -108,13 +102,11 @@ include './includes/header.php';
                                             <span class="px-3 fw-bold border-start border-end border-dark" style="font-size: 0.9rem;"><?php echo $item['cantidad']; ?></span>
                                             <a href="controllers/carritoController.php?accion=sumar&indice=<?php echo $item['indice']; ?>" class="btn btn-sm btn-light rounded-0 px-2 py-0 border-0" style="background: transparent;">+</a>
                                         </div>
-
                                         <a href="controllers/carritoController.php?accion=eliminar&indice=<?php echo $item['indice']; ?>" class="text-danger small text-decoration-none">
                                             <i class="bi bi-trash fs-5 d-md-none"></i>
                                             <span class="d-none d-md-inline text-decoration-underline">Eliminar</span>
                                         </a>
                                     </div>
-
                                     <div class="text-end d-block d-md-none">
                                         <span class="fw-bold fs-6"><?php echo number_format($item['subtotal'], 2); ?> €</span>
                                     </div>
@@ -124,7 +116,6 @@ include './includes/header.php';
                     </div>
                 <?php } ?>
             </div>
-
             <div class="col-lg-4">
                 <div class="card border-0 shadow-sm rounded-0 p-4 bg-light">
                     <h4 class="fw-bold text-uppercase mb-4">Resumen</h4>
@@ -140,10 +131,13 @@ include './includes/header.php';
                         $envio = 0.00;
                     }
 
+                    // ---> NUEVOS TRAMOS DE DESCUENTO POR VOLUMEN <---
                     $porcentajeAuto = 0;
-                    if ($numArticulos >= 5 || $subtotalCarrito > 120) {
+                    if ($numArticulos >= 10) {
+                        $porcentajeAuto = 20;
+                    } elseif ($numArticulos >= 5) {
                         $porcentajeAuto = 15;
-                    } elseif ($numArticulos > 3 || $subtotalCarrito > 75) {
+                    } elseif ($numArticulos >= 3) {
                         $porcentajeAuto = 10;
                     }
 
@@ -152,12 +146,10 @@ include './includes/header.php';
                     $descuentoCantidad = $subtotalCarrito * ($porcentajeFinal / 100);
                     $totalFinal = ($subtotalCarrito - $descuentoCantidad) + $envio;
                     ?>
-
                     <div class="d-flex justify-content-between mb-3 text-muted">
                         <span>Subtotal (<?= $numArticulos ?> prendas)</span>
                         <span><?php echo number_format($subtotalCarrito, 2); ?> €</span>
                     </div>
-
                     <div class="d-flex justify-content-between mb-3 text-muted border-bottom pb-3">
                         <span>Gastos de envío</span>
                         <?php if ($envio == 0): ?>
@@ -166,7 +158,6 @@ include './includes/header.php';
                             <span><?php echo number_format($envio, 2); ?> €</span>
                         <?php endif; ?>
                     </div>
-
                     <div class="mb-4 p-3 bg-white border border-dark">
                         <label class="form-label fw-bold text-uppercase small" style="letter-spacing: 1px;">¿Tienes un código de descuento?</label>
                         <?php if (isset($_GET['error'])) { ?>
@@ -178,7 +169,6 @@ include './includes/header.php';
                                 ?>
                             </div>
                         <?php }; ?>
-
                         <?php if (isset($_SESSION['descuento'])) { ?>
                             <div class="alert alert-success m-0 py-2 d-flex justify-content-between align-items-center rounded-0 border-success border-2 fw-bold">
                                 <span><i class="bi bi-tag-fill me-2"></i> Código <strong><?= $_SESSION['descuento']['codigo'] ?></strong> (-<?= $_SESSION['descuento']['porcentaje'] ?>%)</span>
@@ -194,23 +184,20 @@ include './includes/header.php';
                             </form>
                         <?php }; ?>
                     </div>
-
                     <?php if ($porcentajeFinal > 0) { ?>
                         <div class="d-flex justify-content-between mb-2 text-danger fw-bold bg-danger bg-opacity-10 p-2">
                             <?php if ($porcentajeFinal == $porcentajeAuto): ?>
-                                <span>Descuento Volumen Automático (-<?= $porcentajeFinal ?>%)</span>
+                                <span>Descuento por Volumen (-<?= $porcentajeFinal ?>%)</span>
                             <?php else: ?>
                                 <span>Cupón de Descuento (-<?= $porcentajeFinal ?>%)</span>
                             <?php endif; ?>
                             <span>-<?= number_format($descuentoCantidad, 2) ?> €</span>
                         </div>
                     <?php }; ?>
-
                     <div class="d-flex justify-content-between mb-4 mt-3 border-top border-dark pt-3">
                         <span class="fw-bold text-uppercase fs-5">Total</span>
                         <span class="fw-bold fs-3"><?php echo number_format($totalFinal, 2); ?> €</span>
                     </div>
-
                     <?php
                     $urlCorrecta = (isset($_SESSION["usuario_id"])) ? "checkout.php" : "index.php?mensaje=login_requerido";
                     ?>

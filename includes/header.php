@@ -37,13 +37,28 @@
             transform: translate(-30%, -20%) !important;
         }
     }
+
+    /* Estilo limpio para el nuevo desplegable integrado en tu navbar */
+    .navbar-custom .dropdown-menu {
+        border-radius: 0;
+        border: 2px solid #000;
+        margin-top: 0;
+    }
+    .navbar-custom .dropdown-item {
+        font-size: 0.85rem;
+        padding: 8px 20px;
+    }
+    .navbar-custom .dropdown-item:hover {
+        background-color: #f8f9fa;
+        color: #000;
+        font-weight: bold;
+    }
   </style>
 </head>
 
 <body>
 
   <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
-    <!-- TU CONTENEDOR ORIGINAL INTACTO -->
     <div class="container-fluid px-4 px-lg-5 position-relative">
 
       <button class="navbar-toggler border-0 p-0 shadow-none text-white" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
@@ -52,13 +67,27 @@
 
       <div class="collapse navbar-collapse" id="menuPrincipal">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0 mt-3 mt-lg-0">
-          <!-- CÁMBIALO PARA QUE QUEDE ASÍ -->
-<li class="nav-item">
-    <a class="nav-link fw-bold text-uppercase fs-5 text-primary" href="catalogo.php" style="letter-spacing: 1px; transform: scale(1.1);">Catálogo</a>
-</li>
-          <li class="nav-item"><a class="nav-link" href="catalogo.php?genero=1">Hombre</a></li>
-          <li class="nav-item"><a class="nav-link" href="catalogo.php?genero=2">Mujer</a></li>
-          <li class="nav-item"><a class="nav-link text-danger fw-bold" href="../contacto.php">Contacto</a></li>
+          
+          <li class="nav-item">
+              <a class="nav-link fw-bold text-uppercase fs-5 text-primary" href="catalogo.php" style="letter-spacing: 1px; transform: scale(1.1);">Catálogo</a>
+          </li>
+
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="dropEquipaciones" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Equipaciones
+            </a>
+            <ul class="dropdown-menu shadow-sm" aria-labelledby="dropEquipaciones">
+              <li><span class="dropdown-header text-primary fw-bold small" style="letter-spacing: 1px;">TEMPORADA 26/27</span></li>
+              <li><a class="dropdown-item" href="catalogo.php?coleccion=7">Mundial 2026</a></li>
+              <li><a class="dropdown-item" href="catalogo.php?coleccion=3">La Liga 26/27</a></li>
+              <li><a class="dropdown-item" href="catalogo.php?coleccion=4">Premier League</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><span class="dropdown-header text-danger fw-bold small" style="letter-spacing: 1px;">JOYAS RETRO</span></li>
+              <li><a class="dropdown-item" href="catalogo.php?coleccion=9">Retro La Liga</a></li>
+            </ul>
+          </li>
+
+          <li class="nav-item"><a class="nav-link text-danger fw-bold" href="contacto.php">Contacto</a></li>
         </ul>
       </div>
 
@@ -66,7 +95,6 @@
         DJALEXITO
       </a>
 
-      <!-- TUS ICONOS DE LA DERECHA INTACTOS -->
       <div class="d-flex gap-3 align-items-center order-lg-last ms-auto">
         
         <div class="search-wrapper d-flex align-items-center position-relative m-0">
@@ -123,7 +151,6 @@
     </div>
   </nav>
 
-  <!-- EL RESTO DE TU CÓDIGO INFERIOR SE QUEDA IGUAL (Modal de usuario) -->
   <?php if (!isset($_SESSION['usuario_id'])) { ?>
     <div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" style="max-width: 800px;">

@@ -23,9 +23,6 @@ if (!empty($accion)) {
 
     switch ($accion) {
         
-        // ==============================================
-        // AÑADIR UNA NUEVA EQUIPACIÓN (VARIANTE)
-        // ==============================================
         case 'anadirEquipacionExtra':
             $producto_id = (int)$_POST['producto_id'];
             $equipacion = $_POST['equipacion']; 
@@ -34,7 +31,6 @@ if (!empty($accion)) {
             try {
                 $conexion->beginTransaction();
 
-                // 1. Buscamos o creamos el Color
                 $stmtColor = $conexion->prepare("SELECT id FROM colores WHERE nombre = ?");
                 $stmtColor->execute([$equipacion]);
                 $colorRow = $stmtColor->fetch(PDO::FETCH_ASSOC);
@@ -47,18 +43,15 @@ if (!empty($accion)) {
                     $color_id = $conexion->lastInsertId();
                 }
 
-                // 2. Vinculamos color al producto
                 $stmtLink = $conexion->prepare("INSERT IGNORE INTO producto_colores (producto_id, color_id) VALUES (?, ?)");
                 $stmtLink->execute([$producto_id, $color_id]);
 
-                // 3. Inyectar las tallas en la BBDD para que el producto no se oculte
                 $tallas = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
                 $stmtTalla = $conexion->prepare("INSERT IGNORE INTO producto_tallas (producto_id, color_id, talla, stock) VALUES (?, ?, ?, 0)");
                 foreach($tallas as $t) {
                     $stmtTalla->execute([$producto_id, $color_id, $t]);
                 }
 
-                // 4. Subimos las fotos
                 if (isset($_FILES['imagenes']) && !empty($_FILES['imagenes']['name'][0])) {
                     $totalImagenes = count($_FILES['imagenes']['name']);
                     $rutaDirectorio = __DIR__ . '/../public/img/';
@@ -227,7 +220,6 @@ if (!empty($accion)) {
                 $stmtProdColor = $conexion->prepare("INSERT INTO producto_colores (producto_id, color_id) VALUES (?, ?)");
                 $stmtProdColor->execute([$producto_id, $color_id]);
 
-                // Inyectar las tallas en la BBDD
                 $tallas = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
                 $stmtTalla = $conexion->prepare("INSERT IGNORE INTO producto_tallas (producto_id, color_id, talla, stock) VALUES (?, ?, ?, 0)");
                 foreach($tallas as $t) {
@@ -286,19 +278,18 @@ if (!empty($accion)) {
             
         case 'actualizarColeccion':
             if ($_SERVER["REQUEST_METHOD"] !== "POST") exit();
-            $idCol = isset($_POST['id_coleccion']) ? $_POST['id_coleccion'] : 0;
+            $idCol = isset($_POST['id_coleccion']) ? (int)$_POST['id_coleccion'] : 0;
             $nombre = isset($_POST['nombre']) ? trim($_POST['nombre']) : "";
             $descripcion = isset($_POST['descripcion']) ? trim($_POST['descripcion']) : "";
-            $nuevoEstado = isset($_POST['nuevo_estado']) ? $_POST['nuevo_estado'] : 2;
+            $nuevoEstado = isset($_POST['nuevo_estado']) ? (int)$_POST['nuevo_estado'] : 2;
             
-            // Recogemos la rebaja masiva (Si está vacío, no se cambia nada)
             $descuentoMasivo = isset($_POST['descuento_masivo']) && $_POST['descuento_masivo'] !== "" ? (int)$_POST['descuento_masivo'] : null;
 
             $prodObj = new Producto($conexion);
             $prodObj->actualizarEstadoColeccion($idCol, $nombre, $descripcion, $nuevoEstado);
             
-            // LA MAGIA: Si has escrito un número de descuento, se lo aplica a todas las prendas de esa colección
-            if (is_numeric($descuentoMasivo)) {
+            // LA MAGIA: Aplica estrictamente el descuento a las prendas de ESA colección
+            if ($descuentoMasivo !== null) {
                 $stmtRebaja = $conexion->prepare("UPDATE productos SET rebaja = ? WHERE coleccion_id = ?");
                 $stmtRebaja->execute([$descuentoMasivo, $idCol]);
             }

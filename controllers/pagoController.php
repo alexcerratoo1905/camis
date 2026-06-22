@@ -5,9 +5,6 @@ require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../models/producto.php';
 
-// =========================================================================
-// ¡PON AQUÍ TU CLAVE SECRETA DE STRIPE (sk_test_...)
-// =========================================================================
 \Stripe\Stripe::setApiKey('sk_test_51TRSRfHJPlhS3OiOmWvQ9M4K1TuNPsHDsBNsV9l99ziXgumDDGjjQtGNQNprptcmSqS0QYrdrGx4AMaOr2HAcy5o006E97tSH6');
 
 $db = new Database();
@@ -45,12 +42,16 @@ foreach ($_SESSION['carrito'] as $item) {
     $numArticulos += $item['cantidad'];
 }
 
+// ---> NUEVOS TRAMOS DE DESCUENTO POR VOLUMEN <---
 $porcentajeAuto = 0;
-if ($numArticulos >= 5 || $subtotalCheckout > 120) {
+if ($numArticulos >= 10) {
+    $porcentajeAuto = 20;
+} elseif ($numArticulos >= 5) {
     $porcentajeAuto = 15;
-} elseif ($numArticulos > 3 || $subtotalCheckout > 75) {
+} elseif ($numArticulos >= 3) {
     $porcentajeAuto = 10;
 }
+
 $porcentajeManual = isset($_SESSION['descuento']) ? (int)$_SESSION['descuento']['porcentaje'] : 0;
 $porcentajeFinal = max($porcentajeAuto, $porcentajeManual);
 $factorMultiplicador = 1 - ($porcentajeFinal / 100);
@@ -75,7 +76,6 @@ foreach ($_SESSION['carrito'] as $item) {
     
     $extraPrecio = 0;
     
-    // AÑADIMOS LA VERSIÓN AL TICKET DE STRIPE
     $versionElegida = isset($item['version_genero']) ? ucfirst($item['version_genero']) : 'Hombre';
     $detalles = "Versión: " . $versionElegida . " | Talla: " . $item['talla'];
     

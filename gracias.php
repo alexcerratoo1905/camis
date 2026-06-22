@@ -30,9 +30,15 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         $numArticulos += $item['cantidad'];
     }
 
+    // ---> NUEVOS TRAMOS DE DESCUENTO POR VOLUMEN <---
     $porcentajeAuto = 0;
-    if ($numArticulos >= 5 || $subtotalCheckout > 120) $porcentajeAuto = 15;
-    elseif ($numArticulos > 3 || $subtotalCheckout > 75) $porcentajeAuto = 10;
+    if ($numArticulos >= 10) {
+        $porcentajeAuto = 20;
+    } elseif ($numArticulos >= 5) {
+        $porcentajeAuto = 15;
+    } elseif ($numArticulos >= 3) {
+        $porcentajeAuto = 10;
+    }
 
     $porcentajeManual = isset($_SESSION['descuento']) ? (int)$_SESSION['descuento']['porcentaje'] : 0;
     $porcentajeFinal = max($porcentajeAuto, $porcentajeManual);
@@ -63,7 +69,6 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         $extraPrecio = 0;
         $textoExtrasArray = [];
         
-        // LA MAGIA DE VERDAD QUE GUARDA EN LA BASE DE DATOS
         $versionElegida = isset($item['version_genero']) ? ucfirst($item['version_genero']) : 'Hombre';
         $textoExtrasArray[] = "Versión: " . $versionElegida;
         

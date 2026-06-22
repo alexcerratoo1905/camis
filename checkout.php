@@ -124,12 +124,16 @@ include './includes/header.php';
                         $envio = 0.00;
                     }
 
+                    // ---> NUEVOS TRAMOS DE DESCUENTO POR VOLUMEN <---
                     $porcentajeAuto = 0;
-                    if ($numArticulos >= 5 || $subtotalCheckout > 120) {
+                    if ($numArticulos >= 10) {
+                        $porcentajeAuto = 20;
+                    } elseif ($numArticulos >= 5) {
                         $porcentajeAuto = 15;
-                    } elseif ($numArticulos > 3 || $subtotalCheckout > 75) {
+                    } elseif ($numArticulos >= 3) {
                         $porcentajeAuto = 10;
                     }
+
                     $porcentajeManual = isset($_SESSION['descuento']) ? (int)$_SESSION['descuento']['porcentaje'] : 0;
                     $porcentajeFinal = max($porcentajeAuto, $porcentajeManual);
                     $descuentoCantidad = $subtotalCheckout * ($porcentajeFinal / 100);

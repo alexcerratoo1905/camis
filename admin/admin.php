@@ -550,8 +550,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                 <li class="page-item <?php echo $disabledPrev; ?>"><a class="page-link text-dark" href="admin.php?seccion=productos&pagina=<?= $paginaActual - 1 ?>">Anterior</a></li>
                                                 
                                                 <?php 
-                                                // PAGINACIÓN ARREGLADA (Agrupa con ...)
-                                                $rango = 2; // Páginas a mostrar a cada lado
+                                                $rango = 2; 
                                                 $inicio = max(1, $paginaActual - $rango);
                                                 $fin = min($totalPaginas, $paginaActual + $rango);
 
@@ -651,6 +650,9 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                         <?php 
                                 break;
                         
+                            // ==========================================
+                            // 3. SECCIÓN DE COLECCIONES (LIGAS)
+                            // ==========================================
                             case 'colecciones':
                                 $todasLasColecciones = $producto->listarColecciones(true);
                         ?>
@@ -693,7 +695,13 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php foreach ($todasLasColecciones as $col) { ?>
+                                            <?php foreach ($todasLasColecciones as $col) { 
+                                                // CONSULTA MÁGICA: Le pregunta a la BBDD qué descuento tiene esta liga ahora mismo
+                                                $stmtReb = $conexion->prepare("SELECT rebaja FROM productos WHERE coleccion_id = ? AND rebaja > 0 LIMIT 1");
+                                                $stmtReb->execute([$col['id']]);
+                                                $rebajaRealCol = $stmtReb->fetchColumn();
+                                                $mostrarRebaja = $rebajaRealCol ? (int)$rebajaRealCol : 0;
+                                            ?>
                                                 <tr>
                                                     <td class="text-center text-secondary fw-bold">#<?php echo $col['id']; ?></td>
                                                     <td>
@@ -704,7 +712,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                     </td>
                                                     <td>
                                                         <div class="input-group input-group-sm">
-                                                            <input type="number" name="descuento_masivo" class="form-control border-dark text-center fw-bold" placeholder="0" min="0" max="100" form="form_col_<?php echo $col['id']; ?>">
+                                                            <input type="number" name="descuento_masivo" class="form-control border-dark text-center fw-bold text-danger" value="<?php echo $mostrarRebaja; ?>" min="0" max="100" form="form_col_<?php echo $col['id']; ?>">
                                                             <span class="input-group-text bg-dark text-white border-dark">%</span>
                                                         </div>
                                                         <small class="text-muted d-block text-center mt-1" style="font-size: 0.65rem;">Se aplica a toda la liga</small>
