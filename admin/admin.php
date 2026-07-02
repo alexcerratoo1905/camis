@@ -60,6 +60,10 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
         .btn-flotante-guardar:hover { transform: scale(1.05); }
         .btn-flotante-movil { position: fixed; bottom: 0; left: 0; width: 100%; padding: 15px; background: white; border-top: 1px solid #ddd; z-index: 1040; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); }
         .espacio-movil { padding-bottom: 100px; }
+        
+        /* Estilos para los nuevos botones de categorías */
+        .btn-check:checked + .btn-outline-dark { background-color: #212529; color: white; border-color: #212529; }
+        .dropdown-menu.show { z-index: 1050; }
     </style>
 </head>
 
@@ -459,7 +463,6 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                     </button>
                                 </div>
 
-                                <!-- BARRA DE FILTRO POR CATEGORÍAS -->
                                 <div class="card p-3 mb-4 bg-light border-dark shadow-sm">
                                     <form method="GET" action="admin.php" class="row g-2 align-items-center">
                                         <input type="hidden" name="seccion" value="productos">
@@ -531,15 +534,11 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                         <form action="../controllers/adminController.php" method="POST" enctype="multipart/form-data" class="row g-3">
                                             <input type="hidden" name="accion" value="crearPrendaTienda">
 
-                                            <div class="col-md-3">
+                                            <div class="col-md-4">
                                                 <label class="fw-bold small">Nombre del Producto:</label>
                                                 <input type="text" name="nombre" class="form-control border-dark" placeholder="Ej: Real Madrid 24/25" required>
                                             </div>
-                                            <div class="col-6 col-md-2">
-                                                <label class="fw-bold small">Precio Base (€):</label>
-                                                <input type="number" step="0.01" name="precio" class="form-control border-dark" value="17.00" required>
-                                            </div>
-                                            <div class="col-6 col-md-3">
+                                            <div class="col-6 col-md-4">
                                                 <label class="fw-bold small">Equipación Principal:</label>
                                                 <select name="equipacion" class="form-select border-dark" required>
                                                     <option value="Local">Local</option>
@@ -547,17 +546,24 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                     <option value="Tercera">Tercera Equipación</option>
                                                 </select>
                                             </div>
-                                            <!-- AÑADIDO SELECT MÚLTIPLE PARA CATEGORÍAS -->
-                                            <div class="col-12 col-md-4">
-                                                <label class="fw-bold small">Categoría/s (Ligas):</label>
-                                                <select name="coleccion_id[]" class="form-select border-dark" multiple size="3" required>
-                                                    <?php foreach ($listaColeciones as $c) { ?>
-                                                        <option value="<?php echo $c['id']; ?>"><?php echo $c['nombre']; ?></option>
-                                                    <?php } ?>
-                                                </select>
-                                                <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">(Ctrl/Cmd + Clic para seleccionar varias)</small>
+                                            <div class="col-6 col-md-4">
+                                                <label class="fw-bold small">Precio Base (€):</label>
+                                                <input type="number" step="0.01" name="precio" class="form-control border-dark" value="17.00" required>
                                             </div>
-                                            <div class="col-md-12">
+                                            
+                                            <div class="col-12 mt-3">
+                                                <label class="fw-bold small mb-2"><i class="bi bi-tags me-1"></i>Selecciona las Categorías / Ligas (Puedes marcar varias):</label>
+                                                <div class="d-flex flex-wrap gap-2 p-3 bg-white border border-dark rounded shadow-sm">
+                                                    <?php foreach ($listaColeciones as $c) { ?>
+                                                        <input type="checkbox" class="btn-check" name="coleccion_id[]" id="btncheck_new_<?php echo $c['id']; ?>" value="<?php echo $c['id']; ?>" autocomplete="off">
+                                                        <label class="btn btn-outline-dark rounded-pill fw-bold btn-sm" for="btncheck_new_<?php echo $c['id']; ?>">
+                                                            <?php echo htmlspecialchars($c['nombre']); ?>
+                                                        </label>
+                                                    <?php } ?>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-12 mt-3">
                                                 <label class="fw-bold small">Descripción (Opcional):</label>
                                                 <textarea name="descripcion" class="form-control border-dark" rows="1"></textarea>
                                             </div>
@@ -609,16 +615,29 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                                             <input type="text" name="nombre[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($datos['nombre']); ?>" class="form-control form-control-sm border-0 bg-secondary text-dark fw-bold text-uppercase w-100" style="letter-spacing: 0.5px; background-color: #f8f9fa;" required>
                                                                         </div>
                                                                     </div>
-                                                                    <!-- AÑADIDO SELECT MÚLTIPLE DE CATEGORÍAS -->
+                                                                    
                                                                     <div class="col-4 col-sm-3">
-                                                                        <select name="coleccion[<?php echo $id; ?>][]" class="form-select form-select-sm border-dark bg-light text-dark fw-bold w-100" style="font-size: 0.75rem; min-height: 70px;" multiple required>
-                                                                            <?php foreach ($listaColeciones as $col) { 
-                                                                                $seleccionado = (in_array($col['id'], $datos['colecciones'])) ? 'selected' : '';
-                                                                            ?>
-                                                                                <option value="<?php echo $col['id']; ?>" <?php echo $seleccionado; ?>><?php echo htmlspecialchars($col['nombre']); ?></option>
-                                                                            <?php } ?>
-                                                                        </select>
+                                                                        <div class="dropdown w-100">
+                                                                            <button class="btn btn-sm btn-light border-0 w-100 text-start d-flex justify-content-between align-items-center fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="font-size: 0.75rem;">
+                                                                                <span class="text-truncate">Categorias...</span> <i class="bi bi-chevron-down"></i>
+                                                                            </button>
+                                                                            <ul class="dropdown-menu w-100 p-2 shadow border-dark" style="max-height: 200px; overflow-y: auto; font-size: 0.8rem;">
+                                                                                <?php foreach ($listaColeciones as $col) { 
+                                                                                    $sel = (in_array($col['id'], $datos['colecciones'])) ? 'checked' : '';
+                                                                                ?>
+                                                                                <li class="mb-1">
+                                                                                    <div class="form-check m-0">
+                                                                                        <input class="form-check-input border-dark shadow-sm" type="checkbox" name="coleccion[<?php echo $id; ?>][]" value="<?php echo $col['id']; ?>" id="col_<?php echo $id; ?>_<?php echo $col['id']; ?>" <?php echo $sel; ?>>
+                                                                                        <label class="form-check-label fw-bold w-100" for="col_<?php echo $id; ?>_<?php echo $col['id']; ?>" style="cursor:pointer;">
+                                                                                            <?php echo htmlspecialchars($col['nombre']); ?>
+                                                                                        </label>
+                                                                                    </div>
+                                                                                </li>
+                                                                                <?php } ?>
+                                                                            </ul>
+                                                                        </div>
                                                                     </div>
+
                                                                     <div class="col-4 col-sm-2">
                                                                         <div class="input-group input-group-sm">
                                                                             <input type="number" step="0.01" name="precio[<?php echo $id; ?>]" value="<?php echo $datos['precio']; ?>" class="form-control text-center fw-bold border-0 bg-light text-dark p-1" style="font-size: 0.8rem;">
@@ -723,101 +742,114 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                                             <input type="text" name="nombre[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($datos['nombre']); ?>" class="form-control form-control-sm border-0 bg-secondary text-dark fw-bold text-uppercase w-100" style="letter-spacing: 0.5px; background-color: #f8f9fa;" required>
                                                                         </div>
                                                                     </div>
-                                                                    <!-- AÑADIDO SELECT MÚLTIPLE DE CATEGORÍAS -->
-                                                                    <div class="col-4 col-sm-3">
-                                                                        <select name="coleccion[<?php echo $id; ?>][]" class="form-select form-select-sm border-dark bg-light text-dark fw-bold w-100" style="font-size: 0.75rem; min-height: 70px;" multiple required>
-                                                                            <?php foreach ($listaColeciones as $col) { 
-                                                                                $seleccionado = (in_array($col['id'], $datos['colecciones'])) ? 'selected' : '';
-                                                                            ?>
-                                                                                <option value="<?php echo $col['id']; ?>" <?php echo $seleccionado; ?>><?php echo htmlspecialchars($col['nombre']); ?></option>
-                                                                            <?php } ?>
-                                                                        </select>
-                                                                </div>
-                                                                <div class="col-4 col-sm-2">
-                                                                    <div class="input-group input-group-sm">
-                                                                        <input type="number" step="0.01" name="precio[<?php echo $id; ?>]" value="<?php echo $datos['precio']; ?>" class="form-control text-center fw-bold border-0 bg-light text-dark p-1" style="font-size: 0.8rem;">
-                                                                        <span class="input-group-text bg-light border-0 fw-bold text-dark p-1">€</span>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-4 col-sm-2">
-                                                                    <div class="input-group input-group-sm">
-                                                                        <input type="number" name="rebaja[<?php echo $id; ?>]" value="<?php echo $datos['rebaja']; ?>" class="form-control text-center fw-bold p-1" style="font-size: 0.8rem;" min="0" max="100">
-                                                                        <span class="input-group-text bg-secondary text-white border-0 small p-1">%</span>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-12 mt-2">
-                                                                    <div class="d-flex align-items-center justify-content-between">
-                                                                        <div class="input-group input-group-sm me-2">
-                                                                            <span class="input-group-text bg-secondary text-white border-0 small font-monospace">INFO</span>
-                                                                            <input type="text" name="descripcion[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($descReal ?? ''); ?>" class="form-control bg-dark text-white border-0 small" placeholder="Descripción breve">
-                                                                        </div>
-                                                                        <select name="destacado[<?php echo $id; ?>]" class="form-select form-select-sm fw-bold border-0 w-auto me-2 <?php echo ($datos['destacado'] == 1 ? 'text-warning bg-dark' : 'text-muted'); ?>">
-                                                                            <option value="1" <?php echo ($datos['destacado'] == 1 ? 'selected' : ''); ?>>★ DEST</option>
-                                                                            <option value="0" <?php echo ($datos['destacado'] == 0 ? 'selected' : ''); ?>>NORMAL</option>
-                                                                        </select>
-                                                                        <select name="activo[<?php echo $id; ?>]" class="form-select form-select-sm fw-bold border-0 w-auto <?php echo ($datos['activo'] == 1 ? 'text-success' : 'text-danger'); ?>">
-                                                                            <option value="1" <?php echo ($datos['activo'] == 1 ? 'selected' : ''); ?>>ACT</option>
-                                                                            <option value="0" <?php echo ($datos['activo'] == 0 ? 'selected' : ''); ?>>OCU</option>
-                                                                        </select>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="card-body bg-white border border-top-0 border-light p-3">
-                                                            <ul class="nav nav-tabs nav-tabs-scroll" role="tablist">
-                                                                <?php 
-                                                                $vIndex = 0;
-                                                                foreach($datos['variantes'] as $color_id => $var): 
-                                                                    $isActive = ($vIndex == 0) ? 'active' : '';
-                                                                ?>
-                                                                <li class="nav-item flex-shrink-0" role="presentation">
-                                                                    <button class="nav-link text-dark text-uppercase <?= $isActive ?>" data-bs-toggle="tab" data-bs-target="#variante-<?= $id ?>-<?= $color_id ?>" type="button" role="tab">
-                                                                        <i class="bi bi-tag-fill me-1"></i> <?= htmlspecialchars($var['equipacion']) ?>
-                                                                    </button>
-                                                                </li>
-                                                                <?php $vIndex++; endforeach; ?>
-                                                                
-                                                                <li class="nav-item ms-auto flex-shrink-0">
-                                                                    <button type="button" class="btn btn-sm btn-warning fw-bold text-dark mt-1 mx-1" data-bs-toggle="modal" data-bs-target="#modalVariante<?= $id ?>">
-                                                                        <i class="bi bi-plus-circle-fill"></i> Variante
-                                                                    </button>
-                                                                </li>
-                                                            </ul>
-
-                                                            <div class="tab-content mt-3">
-                                                                <?php 
-                                                                $vIndex = 0;
-                                                                foreach($datos['variantes'] as $color_id => $var): 
-                                                                    $isActive = ($vIndex == 0) ? 'show active' : '';
                                                                     
-                                                                    $stmtFotos = $conexion->prepare("SELECT id, url_imagen FROM imagenes_productos WHERE producto_id = ? AND color_id = ?");
-                                                                    $stmtFotos->execute([$id, $color_id]);
-                                                                    $fotosProducto = $stmtFotos->fetchAll(PDO::FETCH_ASSOC);
-                                                                ?>
-                                                                <div class="tab-pane fade <?= $isActive ?>" id="variante-<?= $id ?>-<?= $color_id ?>" role="tabpanel">
-                                                                    <div class="d-flex justify-content-end mb-2">
-                                                                        <a href="../controllers/adminController.php?accion=borrarVariante&p_id=<?= $id; ?>&c_id=<?= $color_id; ?>&pag=<?= $paginaActual; ?>&filtro=<?= $filtroColeccion; ?>" class="btn btn-sm btn-outline-danger py-1 px-2 fw-bold" style="font-size: 0.75rem;" onclick="return confirm('¿Estás seguro de que quieres eliminar TODA esta variante? Se borrarán todas sus fotos, stock y tallas de la base de datos.');">
-                                                                            <i class="bi bi-trash-fill"></i> Borrar Equipación
-                                                                        </a>
+                                                                    <div class="col-4 col-sm-3">
+                                                                        <div class="dropdown w-100">
+                                                                            <button class="btn btn-sm btn-light border-0 w-100 text-start d-flex justify-content-between align-items-center fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="font-size: 0.75rem;">
+                                                                                <span class="text-truncate">Categorias...</span> <i class="bi bi-chevron-down"></i>
+                                                                            </button>
+                                                                            <ul class="dropdown-menu w-100 p-2 shadow border-dark" style="max-height: 200px; overflow-y: auto; font-size: 0.8rem;">
+                                                                                <?php foreach ($listaColeciones as $col) { 
+                                                                                    $sel = (in_array($col['id'], $datos['colecciones'])) ? 'checked' : '';
+                                                                                ?>
+                                                                                <li class="mb-1">
+                                                                                    <div class="form-check m-0">
+                                                                                        <input class="form-check-input border-dark shadow-sm" type="checkbox" name="coleccion[<?php echo $id; ?>][]" value="<?php echo $col['id']; ?>" id="col_<?php echo $id; ?>_<?php echo $col['id']; ?>" <?php echo $sel; ?>>
+                                                                                        <label class="form-check-label fw-bold w-100" for="col_<?php echo $id; ?>_<?php echo $col['id']; ?>" style="cursor:pointer;">
+                                                                                            <?php echo htmlspecialchars($col['nombre']); ?>
+                                                                                        </label>
+                                                                                    </div>
+                                                                                </li>
+                                                                                <?php } ?>
+                                                                            </ul>
+                                                                        </div>
                                                                     </div>
-                                                                    <div class="d-flex flex-wrap align-items-center bg-light p-2 rounded border border-light gap-2">
-                                                                        <?php foreach ($fotosProducto as $ft) { ?>
-                                                                            <div class="crm-thumb-container m-0">
-                                                                                <img src="../<?= htmlspecialchars($ft['url_imagen']); ?>" class="crm-thumb shadow-sm">
-                                                                                <a href="../controllers/adminController.php?accion=borrarFotoEspecifica&id_foto=<?= $ft['id']; ?>&p_id=<?= $id; ?>&pag=<?= $paginaActual; ?>&filtro=<?= $filtroColeccion; ?>" class="btn-borrar-foto" onclick="return confirm('¿Borrar foto?');">×</a>
+
+                                                                    <div class="col-4 col-sm-2">
+                                                                        <div class="input-group input-group-sm">
+                                                                            <input type="number" step="0.01" name="precio[<?php echo $id; ?>]" value="<?php echo $datos['precio']; ?>" class="form-control text-center fw-bold border-0 bg-light text-dark p-1" style="font-size: 0.8rem;">
+                                                                            <span class="input-group-text bg-light border-0 fw-bold text-dark p-1">€</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-4 col-sm-2">
+                                                                        <div class="input-group input-group-sm">
+                                                                            <input type="number" name="rebaja[<?php echo $id; ?>]" value="<?php echo $datos['rebaja']; ?>" class="form-control text-center fw-bold p-1" style="font-size: 0.8rem;" min="0" max="100">
+                                                                            <span class="input-group-text bg-secondary text-white border-0 small p-1">%</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-12 mt-2">
+                                                                        <div class="d-flex align-items-center justify-content-between">
+                                                                            <div class="input-group input-group-sm me-2">
+                                                                                <span class="input-group-text bg-secondary text-white border-0 small font-monospace">INFO</span>
+                                                                                <input type="text" name="descripcion[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($descReal ?? ''); ?>" class="form-control bg-dark text-white border-0 small" placeholder="Descripción breve">
                                                                             </div>
-                                                                        <?php } ?>
-                                                                        <button type="button" class="btn btn-outline-secondary bg-white shadow-sm d-flex align-items-center justify-content-center p-0" style="height: 55px; width: 55px; border-style: dashed; border-width: 2px;" onclick="document.getElementById('add-foto-input-<?= $id ?>-<?= $color_id ?>').click();" title="Añadir foto">
-                                                                            <i class="bi bi-plus-lg fs-5 text-dark"></i>
-                                                                        </button>
+                                                                            <select name="destacado[<?php echo $id; ?>]" class="form-select form-select-sm fw-bold border-0 w-auto me-2 <?php echo ($datos['destacado'] == 1 ? 'text-warning bg-dark' : 'text-muted'); ?>">
+                                                                                <option value="1" <?php echo ($datos['destacado'] == 1 ? 'selected' : ''); ?>>★ DEST</option>
+                                                                                <option value="0" <?php echo ($datos['destacado'] == 0 ? 'selected' : ''); ?>>NORMAL</option>
+                                                                            </select>
+                                                                            <select name="activo[<?php echo $id; ?>]" class="form-select form-select-sm fw-bold border-0 w-auto <?php echo ($datos['activo'] == 1 ? 'text-success' : 'text-danger'); ?>">
+                                                                                <option value="1" <?php echo ($datos['activo'] == 1 ? 'selected' : ''); ?>>ACT</option>
+                                                                                <option value="0" <?php echo ($datos['activo'] == 0 ? 'selected' : ''); ?>>OCU</option>
+                                                                            </select>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                                <?php $vIndex++; endforeach; ?>
+                                                            </div>
+
+                                                            <div class="card-body bg-white border border-top-0 border-light p-3">
+                                                                <ul class="nav nav-tabs nav-tabs-scroll" role="tablist">
+                                                                    <?php 
+                                                                    $vIndex = 0;
+                                                                    foreach($datos['variantes'] as $color_id => $var): 
+                                                                        $isActive = ($vIndex == 0) ? 'active' : '';
+                                                                    ?>
+                                                                    <li class="nav-item flex-shrink-0" role="presentation">
+                                                                        <button class="nav-link text-dark text-uppercase <?= $isActive ?>" data-bs-toggle="tab" data-bs-target="#variante-<?= $id ?>-<?= $color_id ?>" type="button" role="tab">
+                                                                            <i class="bi bi-tag-fill me-1"></i> <?= htmlspecialchars($var['equipacion']) ?>
+                                                                        </button>
+                                                                    </li>
+                                                                    <?php $vIndex++; endforeach; ?>
+                                                                    
+                                                                    <li class="nav-item ms-auto flex-shrink-0">
+                                                                        <button type="button" class="btn btn-sm btn-warning fw-bold text-dark mt-1 mx-1" data-bs-toggle="modal" data-bs-target="#modalVariante<?= $id ?>">
+                                                                        <i class="bi bi-plus-circle-fill"></i> Variante
+                                                                        </button>
+                                                                    </li>
+                                                                </ul>
+
+                                                                <div class="tab-content mt-3">
+                                                                    <?php 
+                                                                    $vIndex = 0;
+                                                                    foreach($datos['variantes'] as $color_id => $var): 
+                                                                        $isActive = ($vIndex == 0) ? 'show active' : '';
+                                                                        
+                                                                        $stmtFotos = $conexion->prepare("SELECT id, url_imagen FROM imagenes_productos WHERE producto_id = ? AND color_id = ?");
+                                                                        $stmtFotos->execute([$id, $color_id]);
+                                                                        $fotosProducto = $stmtFotos->fetchAll(PDO::FETCH_ASSOC);
+                                                                    ?>
+                                                                    <div class="tab-pane fade <?= $isActive ?>" id="variante-<?= $id ?>-<?= $color_id ?>" role="tabpanel">
+                                                                        <div class="d-flex justify-content-end mb-2">
+                                                                            <a href="../controllers/adminController.php?accion=borrarVariante&p_id=<?= $id; ?>&c_id=<?= $color_id; ?>&pag=<?= $paginaActual; ?>&filtro=<?= $filtroColeccion; ?>" class="btn btn-sm btn-outline-danger py-1 px-2 fw-bold" style="font-size: 0.75rem;" onclick="return confirm('¿Estás seguro de que quieres eliminar TODA esta variante? Se borrarán todas sus fotos, stock y tallas de la base de datos.');">
+                                                                                <i class="bi bi-trash-fill"></i> Borrar Equipación
+                                                                            </a>
+                                                                        </div>
+                                                                        <div class="d-flex flex-wrap align-items-center bg-light p-2 rounded border border-light gap-2">
+                                                                            <?php foreach ($fotosProducto as $ft) { ?>
+                                                                                <div class="crm-thumb-container m-0">
+                                                                                    <img src="../<?= htmlspecialchars($ft['url_imagen']); ?>" class="crm-thumb shadow-sm">
+                                                                                    <a href="../controllers/adminController.php?accion=borrarFotoEspecifica&id_foto=<?= $ft['id']; ?>&p_id=<?= $id; ?>&pag=<?= $paginaActual; ?>&filtro=<?= $filtroColeccion; ?>" class="btn-borrar-foto" onclick="return confirm('¿Borrar foto?');">×</a>
+                                                                                </div>
+                                                                            <?php } ?>
+                                                                            <button type="button" class="btn btn-outline-secondary bg-white shadow-sm d-flex align-items-center justify-content-center p-0" style="height: 55px; width: 55px; border-style: dashed; border-width: 2px;" onclick="document.getElementById('add-foto-input-<?= $id ?>-<?= $color_id ?>').click();" title="Añadir foto">
+                                                                                <i class="bi bi-plus-lg fs-5 text-dark"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <?php $vIndex++; endforeach; ?>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                <?php } ?>
+                                                    <?php } ?>
                                                 </div>
                                             </div>
 
@@ -943,13 +975,13 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                         <tbody>
                                             <?php foreach ($todasLasColecciones as $col) { 
                                                 // Consultar el descuento actual de la liga como referencia
-                                                $stmtReb = $conexion->prepare("SELECT rebaja FROM productos WHERE coleccion_id = ? AND rebaja > 0 LIMIT 1");
+                                                $stmtReb = $conexion->prepare("SELECT p.rebaja FROM productos p INNER JOIN producto_colecciones pc ON p.id = pc.producto_id WHERE pc.coleccion_id = ? AND p.rebaja > 0 LIMIT 1");
                                                 $stmtReb->execute([$col['id']]);
                                                 $rebajaRealCol = $stmtReb->fetchColumn();
                                                 $mostrarRebaja = $rebajaRealCol ? (int)$rebajaRealCol : 0;
 
                                                 // Consultar el precio actual del primer producto de la liga como referencia
-                                                $stmtPrecio = $conexion->prepare("SELECT precio FROM productos WHERE coleccion_id = ? LIMIT 1");
+                                                $stmtPrecio = $conexion->prepare("SELECT p.precio FROM productos p INNER JOIN producto_colecciones pc ON p.id = pc.producto_id WHERE pc.coleccion_id = ? LIMIT 1");
                                                 $stmtPrecio->execute([$col['id']]);
                                                 $precioRefCol = $stmtPrecio->fetchColumn();
                                                 $mostrarPrecio = $precioRefCol ? number_format((float)$precioRefCol, 2, '.', '') : '';

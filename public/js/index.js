@@ -1,68 +1,44 @@
-const fechaLanzamiento = new Date("2026-06-20T19:00:00").getTime();
+// =====================================================================
+// HERROR - EFECTO SCROLL 3D PARA MÚLTIPLES CAMISETAS (HARDWARE ACCELERATED)
+// =====================================================================
 
-const temporizador = setInterval(() => {
+document.addEventListener("DOMContentLoaded", function() {
+    
+    const shirts = document.querySelectorAll(".floating-shirt");
+    const container = document.getElementById("shirt-container");
+    
+    if (shirts.length === 0 || !container) return;
 
-    const fechaActual = new Date().getTime();
-    const tiempoRestante = fechaLanzamiento - fechaActual;
-    const dias = Math.floor(tiempoRestante / (1000 * 60 * 60 * 24));
-    const horas = Math.floor((tiempoRestante % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutos = Math.floor((tiempoRestante % (1000 * 60 * 60)) / (1000 * 60));
-    const segundos = Math.floor((tiempoRestante % (1000 * 60)) / 1000);
-
-    document.getElementById("dias").innerHTML = dias;
-    document.getElementById("horas").innerHTML = horas;
-    document.getElementById("minutos").innerHTML = minutos;
-    document.getElementById("segundos").innerHTML = segundos;
-
-
-
-}, 1000);
-
-const formSolicitar = document.getElementById('formSolicitarAcceso');
-if(formSolicitar){
-    formSolicitar.addEventListener('submit', function(e){
-        e.preventDefault();
-        const emailInput = document.getElementById('emailAcceso');
-        const email = emailInput.value;
-        const btn = e.target.querySelector('button');
+    let currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+    
+    function render3D() {
+        // Obtenemos el scroll directamente en cada fotograma, no dependemos del evento "scroll"
+        let targetScrollY = window.pageYOffset || document.documentElement.scrollTop;
         
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> ENVIANDO...';
-
-        fetch('controllers/solicitarCodigoController.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email })
-        })
-        .then(response => response.json())
-        .then(data => {
-            btn.disabled = false;
-            btn.innerText = "Enviar solicitud";
-
-            if(data.status === 'success'){
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Pase solicitado!',
-                    text: 'En breves momentos recibirás un código de un solo uso en tu correo electrónico.',
-                    confirmButtonColor: 'var(--color-principal, #000)'
-                });
-                emailInput.value = ""; 
-                const modal = bootstrap.Modal.getInstance(document.getElementById('modalSolicitarAcceso'));
-                modal.hide();
-            } else {
-                throw new Error(data.message);
-            }
-        })
-        .catch(error => {
-            btn.disabled = false;
-            btn.innerText = "Enviar solicitud";
-            console.error("Error:", error);
-            Swal.fire({
-                icon: 'error',
-                title: 'No se pudo enviar',
-                text: 'Hubo un problema técnico: ' + error.message,
-                confirmButtonColor: 'var(--color-principal, #000)'
-            });
+        // Interpolación fluida
+        currentScrollY += (targetScrollY - currentScrollY) * 0.08;
+        
+        shirts.forEach((shirt, index) => {
+            let speed = parseFloat(shirt.getAttribute('data-speed'));
+            let rotSpeed = parseFloat(shirt.getAttribute('data-rot'));
+            let dir = parseFloat(shirt.getAttribute('data-dir')); // 1 o -1
+            
+            // Usamos translate3d para forzar la aceleración GPU y evitar lag
+            let translateY = currentScrollY * speed * dir * -1; 
+            let rotateY = (currentScrollY * rotSpeed) + (index * 35); 
+            let rotateZ = currentScrollY * (rotSpeed * 0.1) * dir;
+            
+            shirt.style.transform = `translate3d(0px, ${translateY}px, 0px) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`;
         });
-    });
-}
+
+        // Bajar opacidad al llegar muy abajo para no distraer los carruseles
+        let globalOpacity = Math.max(0.1, 1 - (currentScrollY * 0.0003));
+        container.style.opacity = globalOpacity;
+
+        requestAnimationFrame(render3D);
+    }
+
+    // Iniciar loop de animación
+    requestAnimationFrame(render3D);
+
+});

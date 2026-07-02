@@ -2,7 +2,6 @@
 require_once 'controllers/indexController.php'; 
 
 // OBTENER PRODUCTOS DESTACADOS MANUALMENTE
-// Extraemos solo los productos que has marcado con la estrella en el CRM
 $dbIndex = new Database();
 $connIndex = $dbIndex->conectar();
 $sqlDest = "SELECT p.*, 
@@ -16,246 +15,211 @@ $destacados = $stmtDest->fetchAll(PDO::FETCH_ASSOC);
 
 include './includes/header.php'; 
 ?>
-<section class="vip-countdown position-relative text-center py-5 overflow-hidden text-white">
-    <div class="vip-overlay position-absolute w-100 h-100 top-0 start-0"></div>
-    <div class="container position-relative z-1">
-        <h2 class="vip-title display-4 fw-bold text-uppercase mb-3">Acceso Anticipado</h2>
-        <p class="fs-5 mb-5 text-light fw-light">Nuestra colección exclusiva está a punto de salir. Consigue tu acceso anticipado.</p>
-        <div class="vip-reloj-container mb-5 mx-auto">
-            <div id="reloj-vip" class="d-flex justify-content-center align-items-center gap-3 gap-md-5">
-                <div class="text-center">
-                    <span id="dias" class="vip-number fw-bold d-block">00</span>
-                    <span class="vip-label text-uppercase fw-bold">Días</span>
+
+<!-- FONDO DINÁMICO 3D (Múltiples Camisetas) -->
+<div class="scroll-shirt-container" id="shirt-container">
+    <!-- Camiseta Principal (Centro) -->
+    <img src="public/img/shirt-3d.png" class="floating-shirt" data-speed="0.5" data-rot="0.2" data-dir="1" style="top: 20%; left: 30%; width: 450px; z-index: 0; filter: brightness(0.9);">
+    <!-- Camiseta Fondo Izquierda (Desenfocada) -->
+    <img src="public/img/shirt-3d.png" class="floating-shirt" data-speed="0.2" data-rot="-0.15" data-dir="-1" style="top: 10%; left: 5%; width: 300px; z-index: -2; filter: blur(4px) brightness(0.7);">
+    <!-- Camiseta Fondo Derecha (Desenfocada) -->
+    <img src="public/img/shirt-3d.png" class="floating-shirt" data-speed="0.3" data-rot="0.3" data-dir="1" style="top: 50%; right: 5%; width: 350px; z-index: -1; filter: blur(2px) brightness(0.8);">
+    <!-- Camiseta Abajo Izquierda -->
+    <img src="public/img/shirt-3d.png" class="floating-shirt" data-speed="0.6" data-rot="-0.25" data-dir="-1" style="top: 75%; left: 15%; width: 250px; z-index: -1; filter: blur(1px) brightness(0.85);">
+    <!-- Camiseta Abajo Derecha (Muy desenfocada y lenta) -->
+    <img src="public/img/shirt-3d.png" class="floating-shirt" data-speed="0.15" data-rot="0.1" data-dir="1" style="top: 85%; right: 20%; width: 500px; z-index: -3; filter: blur(6px) brightness(0.6);">
+</div>
+
+<!-- HERO SECTION: Portada inicial -->
+<section class="hero-section">
+    <div class="container position-relative z-2">
+        <h1 class="hero-title animate__animated animate__fadeInDown">HERROR</h1>
+        <p class="hero-subtitle animate__animated animate__fadeInUp animate__delay-1s">REDEFINIENDO EL JUEGO</p>
+        
+        <a href="#bento-explorar" class="btn-scroll-down animate__animated animate__fadeIn animate__delay-2s mt-5 d-inline-block">
+            <span class="d-block small text-uppercase fw-bold mb-2 text-muted" style="letter-spacing: 2px;">Descubre</span>
+            <i class="bi bi-chevron-down fs-3"></i>
+        </a>
+    </div>
+</section>
+
+<!-- SECCIÓN BENTO GRID: Explorar Categorías -->
+<section id="bento-explorar" class="container my-5 py-5 position-relative z-2">
+    <div class="row g-4 bento-grid">
+        <!-- Tarjeta Principal Ligas -->
+        <div class="col-md-8">
+            <a href="catalogo.php" class="bento-item bg-dark text-white d-flex align-items-end p-4 p-md-5 text-decoration-none shadow-lg h-100 position-relative overflow-hidden">
+                <div class="bento-bg" style="background-image: url('public/img/fondo.jpg');"></div>
+                <div class="bento-content position-relative z-2 w-100">
+                    <span class="badge bg-white text-dark mb-3 px-3 py-2 fw-bold" style="letter-spacing: 1px;">NUEVA TEMPORADA</span>
+                    <h2 class="display-5 fw-bold text-uppercase mb-2">Equipaciones 26/27</h2>
+                    <p class="fs-5 mb-0 text-white-50">Explora las últimas armaduras de La Liga y la Premier.</p>
                 </div>
-                <span class="vip-separator fw-bold">:</span>
-                <div class="text-center">
-                    <span id="horas" class="vip-number fw-bold d-block">00</span>
-                    <span class="vip-label text-uppercase fw-bold">Horas</span>
+            </a>
+        </div>
+        
+        <!-- Tarjeta Ediciones Especiales -->
+        <div class="col-md-4">
+            <a href="catalogo.php?tipo=1" class="bento-item bg-light text-dark d-flex align-items-start flex-column p-4 text-decoration-none shadow-lg h-100 position-relative overflow-hidden border border-secondary border-opacity-25">
+                <div class="bento-icon mb-auto">
+                    <i class="bi bi-star-fill display-4 text-warning"></i>
                 </div>
-                <span class="vip-separator fw-bold">:</span>
-                <div class="text-center">
-                    <span id="minutos" class="vip-number fw-bold d-block">00</span>
-                    <span class="vip-label text-uppercase fw-bold">Min</span>
+                <div class="bento-content position-relative z-2 w-100 mt-4">
+                    <h3 class="fw-bold text-uppercase mb-2">Ediciones Especiales</h3>
+                    <p class="small text-muted mb-0">Camisetas exclusivas y colaboraciones únicas de edición limitada.</p>
                 </div>
-                <span class="vip-separator fw-bold d-none d-sm-block">:</span>
-                <div class="text-center d-none d-sm-block">
-                    <span id="segundos" class="vip-number fw-bold d-block">00</span>
-                    <span class="vip-label text-uppercase fw-bold">Seg</span>
+            </a>
+        </div>
+        
+        <!-- Tarjeta Retro -->
+        <div class="col-md-4">
+            <a href="catalogo.php?coleccion=6" class="bento-item bg-warning text-dark d-flex align-items-end p-4 text-decoration-none shadow-lg h-100 position-relative overflow-hidden">
+                <div class="bento-content position-relative z-2 w-100">
+                    <h3 class="fw-bold text-uppercase mb-1">Retro Series</h3>
+                    <p class="small text-dark mb-0 fw-bold">Clásicos que nunca mueren.</p>
+                </div>
+            </a>
+        </div>
+        
+        <!-- Tarjeta Galería de Muestra (Sustituye a Woman Collection) -->
+        <div class="col-md-8">
+            <div class="bento-item bg-dark text-white p-4 p-md-5 shadow-lg h-100 position-relative overflow-hidden d-flex flex-column justify-content-center">
+                <div class="position-relative z-2 w-100 text-center mb-4">
+                    <h2 class="display-6 fw-bold text-uppercase mb-1">Nuestra Selección</h2>
+                    <p class="text-white-50 mb-0">Calidad premium en cada detalle.</p>
+                </div>
+                <div class="d-flex justify-content-center align-items-center gap-3 position-relative z-2 bento-gallery">
+                    <!-- IMPORTANTE: CAMBIA ESTAS RUTAS POR TUS FOTOS DE EJEMPLO -->
+                    <img src="public/img/ejemplo1.jpg" onerror="this.src='public/img/fondo.jpg';" class="rounded-3 shadow-lg bento-gallery-img" alt="Ejemplo 1">
+                    <img src="public/img/ejemplo2.jpg" onerror="this.src='public/img/fondo.jpg';" class="rounded-3 shadow-lg bento-gallery-img mt-4" alt="Ejemplo 2">
+                    <img src="public/img/ejemplo3.jpg" onerror="this.src='public/img/fondo.jpg';" class="rounded-3 shadow-lg bento-gallery-img" alt="Ejemplo 3">
                 </div>
             </div>
-        </div>
-        <div class="d-flex justify-content-center gap-3 flex-wrap">
-            <button class="btn btn-outline-light rounded-0 px-4 py-3 text-uppercase fw-bold vip-btn-espaciado" data-bs-toggle="modal" data-bs-target="#modalSolicitarAcceso">
-                Solicitar Código
-            </button>
-            <button class="btn btn-principal transicion-suave rounded-0 px-4 py-3 text-uppercase fw-bold vip-btn-espaciado" data-bs-toggle="modal" data-bs-target="#modalEntrarAcceso">
-                Ya tengo mi pase
-            </button>
         </div>
     </div>
 </section>
 
-<div class="modal fade" id="modalSolicitarAcceso" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-0">
-            <div class="modal-header border-0 pb-0">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center p-4 p-md-5 pt-0">
-                <h3 class="fw-bold text-uppercase mb-3">Pase Anticipado</h3>
-                <p class="text-muted small mb-4">Introduce tu correo electrónico. Te enviaremos un código de un solo uso para acceder a la nueva colección antes de la apertura pública.</p>
-                <form id="formSolicitarAcceso">
-                    <input type="email" id="emailAcceso" class="form-control rounded-0 text-center mb-3 py-3 bg-light border-0" placeholder="tu@email.com" required>
-                    <button type="submit" class="btn btn-dark w-100 rounded-0 py-3 text-uppercase fw-bold" style="letter-spacing: 1px;">Enviar solicitud</button>
-                </form>
-            </div>
+<!-- SECCIÓN: CARRUSEL DESTACADOS (Cristal) -->
+<section class="container my-5 py-5 position-relative z-2">
+    <div class="glass-panel p-4 p-md-5">
+        <div class="d-flex justify-content-between align-items-end mb-5 border-bottom border-dark pb-3">
+            <h3 class="fw-bold text-uppercase m-0 display-6" style="letter-spacing: 2px;">Selección Destacada</h3>
+            <a href="catalogo.php" class="text-dark fw-bold text-uppercase small text-decoration-none d-none d-md-block" style="letter-spacing: 1px;">Ver Todo <i class="bi bi-arrow-right ms-1"></i></a>
         </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modalEntrarAcceso" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-0 modal-acceso-bg border-0 shadow-lg">
-            <div class="modal-header border-0 pb-0">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center p-4 p-md-5 pt-0">
-                <i class="bi bi-unlock fs-1 text-acento mb-3 d-block"></i>
-                <h3 class="fw-bold text-uppercase mb-3">Acceso Exclusivo</h3>
-                <p class="text-muted small mb-4">Introduce el código secreto que has recibido por email.</p>
-                <form id="form-entrar-vip" action="controllers/accesoController.php" method="POST">
-                    <input type="text" name="codigo" class="form-control rounded-0 text-center mb-4 py-3 text-uppercase fw-bold fs-3 input-codigo-acceso" placeholder="XXXXXX" maxlength="6" required>
-                    <button type="submit" class="btn btn-principal transicion-suave w-100 rounded-0 py-3 text-uppercase fw-bold" style="letter-spacing: 1px;">Desbloquear Colección</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<section class="container my-5 py-5 overflow-hidden">
-    <h3 class="text-center fw-bold text-uppercase mb-5" style="letter-spacing: 4px;">Selección Destacada</h3>
-    <div id="carruselDestacados" class="carousel carousel-dark slide" data-bs-ride="carousel" data-bs-pause="hover">
-        <div class="carousel-inner px-2 px-md-5" id="carruselDestacadosInner">
-            <?php
-            if (!empty($destacados)) {
-                $contador = 0;
-                foreach ($destacados as $prenda) {
-                    if ($contador % 4 == 0) {
-                        $claseActive = ($contador == 0) ? 'active' : '';
-            ?>
-                        <div class="carousel-item <?= $claseActive ?>" data-bs-interval="3000">
-                            <div class="row">
-                            <?php
-                        }
-                            ?>
-                            <div class="col-6 col-md-3 position-relative d-flex flex-column mb-4">
-                                <div class="card product-card border-0 bg-transparent position-relative">
-                                    <div class="img-wrapper position-relative overflow-hidden">
-                                        <a href="fichaProducto.php?idPrenda=<?= $prenda["id"] ?>&color=<?= $prenda["color_id"] ?>" class="text-decoration-none text-dark d-block">
-                                            
-                                            <?php
-                                            $rebaja = isset($prenda['rebaja']) ? (int)$prenda['rebaja'] : 0;
-                                            $precioFinal = $prenda['precio'] - ($prenda['precio'] * $rebaja / 100);
-                                            
-                                            if ($rebaja > 0){
-                                            ?>
-                                                <span class="position-absolute top-0 end-0 m-2 badge bg-danger text-white rounded-0 fw-bold px-2 py-1 shadow-sm" style="font-size: 0.8rem; letter-spacing: 1px; z-index: 10;" >-<?= $rebaja; ?>%</span>
-                                            <?php } ?>
-                                            
-                                            <img src="<?= $prenda['url_imagen'] ?>" class="card-img-top rounded-0 img-fluida-reciente" alt="<?= $prenda['nombre'] ?>">
-                                        </a>
-                                        <div id="overlay-tallas-<?= $prenda['id'] ?>" class="overlay-tallas d-none position-absolute bottom-0 start-0 w-100 bg-white bg-opacity-75 p-3 text-center">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="small fw-bold text-uppercase" style="letter-spacing: 1px;">Selecciona Talla</span>
-                                                <button type="button" class="btn-close" style="font-size: 0.7rem;" onclick="cerrarOverlayTallas(event, <?= $prenda['id'] ?>)"></button>
-                                            </div>
-                                            <div id="contenedor-botones-<?= $prenda['id'] ?>" class="d-flex justify-content-center flex-wrap gap-2">
+        
+        <div id="carruselDestacados" class="carousel carousel-dark slide" data-bs-ride="carousel" data-bs-pause="hover">
+            <div class="carousel-inner px-1 px-md-3" id="carruselDestacadosInner">
+                <?php
+                if (!empty($destacados)) {
+                    $contador = 0;
+                    foreach ($destacados as $prenda) {
+                        if ($contador % 4 == 0) {
+                            $claseActive = ($contador == 0) ? 'active' : '';
+                ?>
+                            <div class="carousel-item <?= $claseActive ?>" data-bs-interval="4000">
+                                <div class="row">
+                                <?php
+                            }
+                                ?>
+                                <div class="col-6 col-md-3 position-relative d-flex flex-column mb-4">
+                                    <div class="card product-card border-0 bg-transparent position-relative">
+                                        <div class="img-wrapper position-relative overflow-hidden shadow-sm rounded-3">
+                                            <a href="fichaProducto.php?idPrenda=<?= $prenda["id"] ?>&color=<?= $prenda["color_id"] ?>" class="text-decoration-none text-dark d-block">
+                                                
+                                                <?php
+                                                $rebaja = isset($prenda['rebaja']) ? (int)$prenda['rebaja'] : 0;
+                                                $precioFinal = $prenda['precio'] - ($prenda['precio'] * $rebaja / 100);
+                                                
+                                                if ($rebaja > 0){
+                                                ?>
+                                                    <span class="position-absolute top-0 end-0 m-2 badge bg-dark text-white rounded-0 fw-bold px-2 py-1 shadow-sm" style="font-size: 0.75rem; letter-spacing: 1px; z-index: 10;" >-<?= $rebaja; ?>%</span>
+                                                <?php } ?>
+                                                
+                                                <img src="<?= $prenda['url_imagen'] ?>" class="card-img-top rounded-0 img-fluida-reciente" alt="<?= $prenda['nombre'] ?>">
+                                            </a>
+                                            <div id="overlay-tallas-<?= $prenda['id'] ?>" class="overlay-tallas d-none position-absolute bottom-0 start-0 w-100 bg-white bg-opacity-75 p-3 text-center">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="small fw-bold text-uppercase" style="letter-spacing: 1px;">Talla</span>
+                                                    <button type="button" class="btn-close" style="font-size: 0.7rem;" onclick="cerrarOverlayTallas(event, <?= $prenda['id'] ?>)"></button>
+                                                </div>
+                                                <div id="contenedor-botones-<?= $prenda['id'] ?>" class="d-flex justify-content-center flex-wrap gap-2">
+                                                </div>
                                             </div>
                                         </div>
+                                        <div class="card-body text-center px-0 pb-1 mt-3">
+                                            <a href="fichaProducto.php?idPrenda=<?= $prenda["id"] ?>&color=<?= $prenda["color_id"] ?>" class="text-decoration-none text-dark d-block">
+                                                <h5 class="card-title text-uppercase fw-bold fs-6 mb-1 text-truncate" style="letter-spacing: 0.5px;"><?= $prenda['nombre'] ?></h5>
+                                                
+                                                <?php if ($rebaja > 0): ?>
+                                                    <p class="card-text mb-0">
+                                                        <span class="text-muted text-decoration-line-through small me-2"><?= number_format($prenda['precio'], 2) ?> €</span>
+                                                        <span class="fw-bold text-dark"><?= number_format($precioFinal, 2) ?> €</span>
+                                                    </p>
+                                                <?php else: ?>
+                                                    <p class="card-text mb-0 fw-bold text-dark"><?= number_format($prenda['precio'], 2) ?> €</p>
+                                                <?php endif; ?>
+                                            </a>
+                                        </div>
                                     </div>
-                                    <div class="card-body text-center px-0 pb-1 mt-2">
-                                        <a href="fichaProducto.php?idPrenda=<?= $prenda["id"] ?>&color=<?= $prenda["color_id"] ?>" class="text-decoration-none text-dark d-block">
-                                            <h5 class="card-title text-uppercase fw-bold fs-6 mb-1 text-truncate"><?= $prenda['nombre'] ?></h5>
-                                            
-                                            <?php if ($rebaja > 0): ?>
-                                                <p class="card-text mb-0">
-                                                    <span class="text-muted text-decoration-line-through small me-2"><?= number_format($prenda['precio'], 2) ?> €</span>
-                                                    <span class="fw-bold text-danger"><?= number_format($precioFinal, 2) ?> €</span>
-                                                </p>
-                                            <?php else: ?>
-                                                <p class="card-text mb-0 fw-bold"><?= number_format($prenda['precio'], 2) ?> €</p>
-                                            <?php endif; ?>
-                                        </a>
+                                    <div class="d-flex align-items-center justify-content-between gap-2 mt-2 px-1">
+                                        <button type="button" class="btn btn-outline-dark rounded-pill flex-grow-1 text-uppercase fw-bold"
+                                            style="height: 38px; font-size: 0.7rem; letter-spacing: 1px; transition: all 0.3s;"
+                                            onclick="abrirOverlayTallas(event, <?= $prenda['id'] ?>, <?= $prenda['color_id'] ?>)">
+                                            Añadir <i class="bi bi-plus-lg ms-1"></i>
+                                        </button>
+                                        <?php
+                                        $iconoCorazon = 'bi-heart';
+                                        if (isset($arrayFavoritos) && in_array($prenda['id'] . '-' . $prenda['color_id'], $arrayFavoritos)) {
+                                            $iconoCorazon = 'bi-heart-fill text-danger border-danger';
+                                        }
+                                        ?>
+                                        <button type="button" class="btn btn-toggle-favorito btn-favorito-custom btn-favorito-std d-flex justify-content-center align-items-center rounded-circle"
+                                            style="border-color: #000; width: 38px; height: 38px;"
+                                            data-id="<?= $prenda['id'] ?>"
+                                            data-color="<?= $prenda['color_id'] ?>">
+                                            <i class="bi <?= $iconoCorazon ?>"></i>
+                                        </button>
                                     </div>
                                 </div>
-                                <div class="d-flex align-items-center justify-content-between gap-2 mt-2 px-1">
-                                    <button type="button" class="btn btn-principal transicion-suave rounded-0 flex-grow-1 text-uppercase fw-bold"
-                                        style="height: 40px; font-size: 0.75rem; letter-spacing: 1px;"
-                                        onclick="abrirOverlayTallas(event, <?= $prenda['id'] ?>, <?= $prenda['color_id'] ?>)">
-                                        Añadir <i class="bi bi-plus-lg ms-1"></i>
-                                    </button>
-                                    <?php
-                                    $iconoCorazon = 'bi-heart';
-                                    if (isset($arrayFavoritos) && in_array($prenda['id'] . '-' . $prenda['color_id'], $arrayFavoritos)) {
-                                        $iconoCorazon = 'bi-heart-fill';
-                                    }
-                                    ?>
-                                    <button type="button" class="btn btn-toggle-favorito btn-favorito-custom btn-favorito-std d-flex justify-content-center align-items-center rounded-0"
-                                        data-id="<?= $prenda['id'] ?>"
-                                        data-color="<?= $prenda['color_id'] ?>">
-                                        <i class="bi <?= $iconoCorazon ?>"></i>
-                                    </button>
+                                <?php
+                                $contador++;
+                                if ($contador % 4 == 0 || $contador == count($destacados)) {
+                                ?>
                                 </div>
                             </div>
-                            <?php
-                            $contador++;
-                            if ($contador % 4 == 0 || $contador == count($destacados)) {
-                            ?>
-                            </div>
-                        </div>
-                <?php
+                    <?php
+                                }
                             }
-                        }
-                    } else {
-                ?>
-                <div class="text-center py-5">
-                    <p class="text-muted">Próximamente prendas destacadas...</p>
-                </div>
-            <?php
-                    }
-            ?>
-        </div>
-        <button class="carousel-control-prev d-none d-md-flex" type="button" data-bs-target="#carruselDestacados" data-bs-slide="prev" style="width: 5%;">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Anterior</span>
-        </button>
-        <button class="carousel-control-next d-none d-md-flex" type="button" data-bs-target="#carruselDestacados" data-bs-slide="next" style="width: 5%;">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Siguiente</span>
-        </button>
-    </div>
-</section>
-
-<section class="container-fluid px-0 my-5 overflow-hidden">
-    <div class="row g-0">
-        <div class="col-md-6 collection-box position-relative">
-            <img src="public/img/hombreColeccion.jpg" class="w-100 object-fit-cover collection-img" alt="Colección Hombre" style="height: 65vh; object-position: top;">
-            <div class="collection-overlay d-flex flex-column align-items-center justify-content-center text-center">
-                <h3 class="display-4 fw-bold text-white text-uppercase collection-title">Hombre</h3>
-                <a href="catalogo.php?genero=1" class="btn btn-outline-light collection-btn transicion-suave mt-3">Ver Colección</a>
-            </div>
-        </div>
-        <div class="col-md-6 collection-box position-relative">
-            <img src="public/img/mujer.png" class="w-100 object-fit-cover collection-img" alt="Colección Mujer" style="height: 65vh; object-position: top;">
-            <div class="collection-overlay d-flex flex-column align-items-center justify-content-center text-center">
-                <h3 class="display-4 fw-bold text-white text-uppercase collection-title">Mujer</h3>
-                <a href="catalogo.php?genero=2" class="btn btn-outline-light collection-btn transicion-suave mt-3">Ver Colección</a>
-            </div>
-        </div>
-    </div>
-</section>
-
-<?php include './includes/prendasRecientes.php'; ?>
-
-<section class="newsletter-section py-5">
-    <div class="container text-center py-4">
-        <h3 class="display-6 fw-bold text-uppercase mb-3 newsletter-title">Subscribete y consigue descuentos. </h3>
-        <p class="mb-4 newsletter-subtitle">Suscríbete para tener acceso anticipado a nuevas colecciones y descuentos exclusivos.</p>
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <form action="index.php" method="POST" class="newsletter-form d-flex align-items-center justify-content-center flex-wrap gap-3">
-                    <input type="email" name="email" class="form-control newsletter-input transicion-suave flex-grow-1" placeholder="TU CORREO ELECTRÓNICO" required>
-                    <button type="submit" class="btn btn-newsletter transicion-suave">Subcribete</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</section>
-
-<div class="modal fade" id="promoModal" tabindex="-1" aria-labelledby="promoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content rounded-0 border-dark border-3 shadow-lg">
-            <div class="modal-header border-bottom border-dark border-2 bg-white">
-                <h5 class="modal-title fw-bold text-uppercase" id="promoModalLabel">
-                    HERROR
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body p-5 text-center bg-light">
-                <h1 class="display-4 fw-bold text-uppercase mb-3">¡Consigue un <span class="text-decoration-underline">10%</span> de descuento!</h1>
-                <p class="text-muted fs-5 mb-4">Suscríbete a nuestra newsletter y recibe un código de descuento instantáneo para tu primera compra. ¡Únete a la familia!</p>
-                <form id="formSuscripcion" action="index.php" method="POST" class="mx-auto" style="max-width: 500px;">
-                    <div class="input-group input-group-lg mb-2">
-                        <input type="email" id="email" name="email" class="form-control rounded-0 border-dark border-2" placeholder="tu@email.com" required>
-                        <button class="btn btn-dark rounded-0 fw-bold text-uppercase px-4 border-2 border-dark" type="submit">¡Lo quiero!</button>
+                        } else {
+                    ?>
+                    <div class="text-center py-5">
+                        <i class="bi bi-stars display-4 text-muted d-block mb-3"></i>
+                        <p class="text-muted fw-bold text-uppercase">Próximamente prendas destacadas...</p>
                     </div>
-                    <small class="text-muted fw-bold small text-uppercase">No enviamos spam. Solo puro estilo.</small>
-                </form>
+                <?php
+                        }
+                ?>
             </div>
+            <!-- Controles minimalistas -->
+            <button class="carousel-control-prev d-none d-md-flex" type="button" data-bs-target="#carruselDestacados" data-bs-slide="prev" style="width: 5%; justify-content: flex-start;">
+                <i class="bi bi-arrow-left text-dark fs-2"></i>
+            </button>
+            <button class="carousel-control-next d-none d-md-flex" type="button" data-bs-target="#carruselDestacados" data-bs-slide="next" style="width: 5%; justify-content: flex-end;">
+                <i class="bi bi-arrow-right text-dark fs-2"></i>
+            </button>
         </div>
     </div>
-</div>
+</section>
 
+<!-- SECCIÓN: CARRUSEL RECIENTES (Cristal) -->
+<section class="position-relative z-2 mb-5 pb-5">
+    <div class="container glass-panel p-4 p-md-5">
+        <h3 class="fw-bold text-uppercase mb-5 display-6 text-center" style="letter-spacing: 2px;">Últimas Entradas</h3>
+        <?php include './includes/prendasRecientes.php'; ?>
+    </div>
+</section>
+
+<!-- Script para el efecto 3D Parallax -->
 <script src="public/js/index.js"></script>
 
 <?php include './includes/footer.php'; ?>
