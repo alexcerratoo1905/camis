@@ -1,7 +1,8 @@
-<?php
-require_once 'controllers/carritoController.php';
-include './includes/header.php';
+<?php 
+require_once 'controllers/carritoController.php'; 
+include './includes/header.php'; 
 ?>
+
 <main class="container my-5 py-5 mt-5" style="min-height: 60vh;">
     <div class="row mb-4">
         <div class="col-12">
@@ -32,7 +33,6 @@ include './includes/header.php';
     <?php else: ?>
         <div class="row g-5">
             <div class="col-lg-8">
-
                 <?php
                 $faltanEnvio = 5 - $numArticulos;
                 $porcentajeEnvio = min(($numArticulos / 5) * 100, 100);
@@ -41,7 +41,7 @@ include './includes/header.php';
                     <div class="d-flex justify-content-between align-items-end mb-2">
                         <?php if ($faltanEnvio > 0): ?>
                             <span class="fw-bold text-uppercase small" style="letter-spacing: 1px;">
-                                ¡Añade <span class="text-danger fs-6"><?php echo $faltanEnvio; ?> prenda(s) más</span> para envío <span class="text-success">GRATIS</span>!
+                                Añade <span class="text-danger fs-6"><?php echo $faltanEnvio; ?> prenda(s) más</span> para envío <span class="text-success">GRATIS</span>!
                             </span>
                         <?php else: ?>
                             <span class="fw-bold text-uppercase text-success small" style="letter-spacing: 1px;">
@@ -76,7 +76,9 @@ include './includes/header.php';
                                                 <?php echo $item['nombre']; ?>
                                             </a>
                                         </h5>
-                                        <p class="text-muted small mb-1">Color: <?php echo $item['color_nombre']; ?> | Talla: <?php echo $item['talla']; ?></p>
+                                        <!-- CAMBIO IMPORTANTE: Equipación en lugar de Color -->
+                                        <p class="text-muted small mb-1">Equipación: <?php echo $item['color_nombre']; ?> | Talla: <?php echo $item['talla']; ?></p>
+                                        
                                         <ul class="list-unstyled mt-1 mb-0 small text-muted fst-italic">
                                             <li><span class="badge bg-dark rounded-0 fw-bold">Versión: <?php echo ucfirst($item['version_genero'] ?? 'Hombre'); ?></span></li>
                                             <?php if ($item['extra_player']): ?><li>+ Versión Player</li><?php endif; ?>
@@ -116,6 +118,7 @@ include './includes/header.php';
                     </div>
                 <?php } ?>
             </div>
+
             <div class="col-lg-4">
                 <div class="card border-0 shadow-sm rounded-0 p-4 bg-light">
                     <h4 class="fw-bold text-uppercase mb-4">Resumen</h4>
@@ -143,9 +146,11 @@ include './includes/header.php';
 
                     $porcentajeManual = isset($_SESSION['descuento']) ? (int)$_SESSION['descuento']['porcentaje'] : 0;
                     $porcentajeFinal = max($porcentajeAuto, $porcentajeManual);
+
                     $descuentoCantidad = $subtotalCarrito * ($porcentajeFinal / 100);
                     $totalFinal = ($subtotalCarrito - $descuentoCantidad) + $envio;
                     ?>
+
                     <div class="d-flex justify-content-between mb-3 text-muted">
                         <span>Subtotal (<?= $numArticulos ?> prendas)</span>
                         <span><?php echo number_format($subtotalCarrito, 2); ?> €</span>
@@ -158,8 +163,10 @@ include './includes/header.php';
                             <span><?php echo number_format($envio, 2); ?> €</span>
                         <?php endif; ?>
                     </div>
+
                     <div class="mb-4 p-3 bg-white border border-dark">
                         <label class="form-label fw-bold text-uppercase small" style="letter-spacing: 1px;">¿Tienes un código de descuento?</label>
+                        
                         <?php if (isset($_GET['error'])) { ?>
                             <div class="alert alert-danger py-2 rounded-0 small fw-bold mb-3 border-2 border-danger">
                                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
@@ -169,6 +176,7 @@ include './includes/header.php';
                                 ?>
                             </div>
                         <?php }; ?>
+
                         <?php if (isset($_SESSION['descuento'])) { ?>
                             <div class="alert alert-success m-0 py-2 d-flex justify-content-between align-items-center rounded-0 border-success border-2 fw-bold">
                                 <span><i class="bi bi-tag-fill me-2"></i> Código <strong><?= $_SESSION['descuento']['codigo'] ?></strong> (-<?= $_SESSION['descuento']['porcentaje'] ?>%)</span>
@@ -184,6 +192,7 @@ include './includes/header.php';
                             </form>
                         <?php }; ?>
                     </div>
+
                     <?php if ($porcentajeFinal > 0) { ?>
                         <div class="d-flex justify-content-between mb-2 text-danger fw-bold bg-danger bg-opacity-10 p-2">
                             <?php if ($porcentajeFinal == $porcentajeAuto): ?>
@@ -194,10 +203,12 @@ include './includes/header.php';
                             <span>-<?= number_format($descuentoCantidad, 2) ?> €</span>
                         </div>
                     <?php }; ?>
+
                     <div class="d-flex justify-content-between mb-4 mt-3 border-top border-dark pt-3">
                         <span class="fw-bold text-uppercase fs-5">Total</span>
                         <span class="fw-bold fs-3"><?php echo number_format($totalFinal, 2); ?> €</span>
                     </div>
+
                     <?php
                     $urlCorrecta = (isset($_SESSION["usuario_id"])) ? "checkout.php" : "index.php?mensaje=login_requerido";
                     ?>
@@ -207,4 +218,5 @@ include './includes/header.php';
         </div>
     <?php endif; ?>
 </main>
+
 <?php include './includes/footer.php'; ?>

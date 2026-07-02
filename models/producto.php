@@ -292,11 +292,13 @@ class Producto
 
     public function listarProductos($estadoActivo, $limite = null)
     {
+        // ACTUALIZADO: INNER JOIN con tabla puente producto_colecciones
         $sql = "SELECT p.*, c.id as color_id, c.nombre as color_nombre, MIN(i.url_imagen) as url_imagen
                 FROM productos p
                 INNER JOIN producto_colores pc ON p.id = pc.producto_id
                 INNER JOIN colores c ON pc.color_id = c.id
-                INNER JOIN colecciones col ON p.coleccion_id = col.id 
+                INNER JOIN producto_colecciones pcol ON p.id = pcol.producto_id
+                INNER JOIN colecciones col ON pcol.coleccion_id = col.id 
                 LEFT JOIN imagenes_productos i ON p.id = i.producto_id AND i.color_id = c.id AND i.es_principal = 1
                 WHERE p.activo = :estadoActivo AND col.activa = 1
                 GROUP BY p.id, c.id
@@ -376,18 +378,39 @@ class Producto
 
     public function actualizarDatosBasicosPrenda($id, $rebaja, $activo, $precio = null, $coleccionId = null) {
         if ($precio !== null) { 
-            if ($coleccionId === "") {
-                $coleccionId = null;
+            // Preparar el ID principal para la compatibilidad con el front antiguo
+            $colIdInsert = is_array($coleccionId) ? ($coleccionId[0] ?? null) : $coleccionId;
+            if ($colIdInsert === "") {
+                $colIdInsert = null;
             }
+            
             $sql = "UPDATE productos SET rebaja = :rebaja, activo = :activo, precio = :precio, coleccion_id = :coleccion_id WHERE id = :id";
-            $params = [':rebaja' => $rebaja, ':activo' => $activo, ':precio' => $precio, ':coleccion_id' => $coleccionId, ':id' => $id];
+            $params = [':rebaja' => $rebaja, ':activo' => $activo, ':precio' => $precio, ':coleccion_id' => $colIdInsert, ':id' => $id];
+            $sentencia = $this->conexionDataBase->prepare($sql);
+            $resultado = $sentencia->execute($params);
+
+            // Actualizar tabla pivote
+            if ($coleccionId !== null && $coleccionId !== "") {
+                $stmtDel = $this->conexionDataBase->prepare("DELETE FROM producto_colecciones WHERE producto_id = ?");
+                $stmtDel->execute([$id]);
+                
+                $stmtIns = $this->conexionDataBase->prepare("INSERT IGNORE INTO producto_colecciones (producto_id, coleccion_id) VALUES (?, ?)");
+                if (is_array($coleccionId)) {
+                    foreach ($coleccionId as $cid) {
+                        if($cid) $stmtIns->execute([$id, $cid]);
+                    }
+                } else {
+                    $stmtIns->execute([$id, $coleccionId]);
+                }
+            }
+
+            return $resultado;
         } else { 
             $sql = "UPDATE productos SET rebaja = :rebaja, activo = :activo WHERE id = :id";
             $params = [':rebaja' => $rebaja, ':activo' => $activo, ':id' => $id];
+            $sentencia = $this->conexionDataBase->prepare($sql);
+            return $sentencia->execute($params);
         }
-        
-        $sentencia = $this->conexionDataBase->prepare($sql);
-        return $sentencia->execute($params);
     }
 
     public function actualizarStockEspecifico($idP, $idC, $talla, $stock) {
@@ -519,11 +542,13 @@ class Producto
     public function filtrarCombinado($parametros, $esModoSecreto = false) {
         $activa = $esModoSecreto ? 3 : 1;
         
+        // ACTUALIZADO: INNER JOIN con tabla puente producto_colecciones
         $sql = "SELECT p.*, c.id as color_id, c.nombre as color_nombre, MIN(i.url_imagen) as url_imagen
                 FROM productos p
                 INNER JOIN producto_colores pc ON p.id = pc.producto_id
                 INNER JOIN colores c ON pc.color_id = c.id
-                INNER JOIN colecciones col ON p.coleccion_id = col.id
+                INNER JOIN producto_colecciones pcol ON p.id = pcol.producto_id
+                INNER JOIN colecciones col ON pcol.coleccion_id = col.id
                 LEFT JOIN imagenes_productos i ON p.id = i.producto_id AND i.color_id = c.id AND i.es_principal = 1
                 WHERE p.activo = 1 AND col.activa = $activa";
                 
@@ -534,7 +559,8 @@ class Producto
             $valoresFiltrado[':genero'] = (int)$parametros['genero'];
         }
         if (!empty($parametros['coleccion'])) {
-            $sql .= " AND p.coleccion_id = :coleccion";
+            // Filtrar por la tabla puente
+            $sql .= " AND pcol.coleccion_id = :coleccion";
             $valoresFiltrado[':coleccion'] = (int)$parametros['coleccion'];
         }
         if (!empty($parametros['tipo'])) {
@@ -546,9 +572,6 @@ class Producto
             $valoresFiltrado[':color'] = $parametros['color'];
         }
         
-        // ELIMINADO EL FILTRO ESTRICTO DE STOCK PARA QUE DROPSHIPPING FUNCIONE
-        // Si eligen talla, simplemente lo ignoramos en la query porque siempre hay talla
-
         if (!empty($parametros['rebajas'])) {
             $sql .= " AND p.rebaja > 0";
         }
@@ -596,9 +619,11 @@ class Producto
         }
         $activa = $esModoSecreto ? 3 : 1;
         try {
+            // ACTUALIZADO: Usamos la tabla puente para determinar min y max
             $sql = "SELECT {$funcionSql}(p.precio) as precio_limite
                     FROM productos p
-                    INNER JOIN colecciones col ON p.coleccion_id = col.id
+                    INNER JOIN producto_colecciones pcol ON p.id = pcol.producto_id
+                    INNER JOIN colecciones col ON pcol.coleccion_id = col.id
                     WHERE p.activo = 1 AND col.activa = $activa";
             $sentencia = $this->conexionDataBase->prepare($sql);
             $sentencia->execute();
@@ -613,11 +638,13 @@ class Producto
 
     public function buscarPorNombre($nombreABuscar)
     {
+        // ACTUALIZADO: INNER JOIN tabla puente
         $sql = "SELECT p.id, p.nombre, p.precio, c.id AS color_id, c.nombre AS color_nombre, MIN(i.url_imagen) AS url_imagen
                 FROM productos p
                 INNER JOIN producto_colores pc ON p.id = pc.producto_id
                 INNER JOIN colores c ON pc.color_id = c.id
-                INNER JOIN colecciones col ON p.coleccion_id = col.id 
+                INNER JOIN producto_colecciones pcol ON p.id = pcol.producto_id
+                INNER JOIN colecciones col ON pcol.coleccion_id = col.id 
                 LEFT JOIN imagenes_productos i ON p.id = i.producto_id AND i.color_id = c.id AND i.es_principal = 1
                 WHERE p.activo = 1 AND col.activa = 1 AND p.nombre LIKE :nombreABuscar
                 GROUP BY p.id, c.id
@@ -629,16 +656,17 @@ class Producto
         return $sentencia->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // ARREGLADO: El ChatBot tampoco buscará por stock para que encuentre las prendas nuevas
     public function buscarPorNombreChatBot($nombreABuscar)
     {
+        // ACTUALIZADO: INNER JOIN tabla puente
         $sql = "SELECT p.id, p.nombre, p.descripcion, p.precio, c.nombre AS color_nombre, 
                        MIN(i.url_imagen) AS url_imagen,
                        'Todas las tallas (S a 4XL)' AS tallas_stock
                 FROM productos p
                 INNER JOIN producto_colores pc ON p.id = pc.producto_id
                 INNER JOIN colores c ON pc.color_id = c.id
-                INNER JOIN colecciones col ON p.coleccion_id = col.id 
+                INNER JOIN producto_colecciones pcol ON p.id = pcol.producto_id
+                INNER JOIN colecciones col ON pcol.coleccion_id = col.id 
                 LEFT JOIN imagenes_productos i ON p.id = i.producto_id AND i.color_id = c.id AND i.es_principal = 1
                 WHERE p.activo = 1 AND col.activa = 1 AND p.nombre LIKE :nombreABuscar
                 GROUP BY p.id, c.id
@@ -845,11 +873,13 @@ class Producto
 
     public function obtenerColeccionSecreta()
     {
+        // ACTUALIZADO: INNER JOIN tabla puente
         $sql = "SELECT p.*, c.id as color_id, c.nombre as color_nombre, MIN(i.url_imagen) as url_imagen
                 FROM productos p
                 INNER JOIN producto_colores pc ON p.id = pc.producto_id
                 INNER JOIN colores c ON pc.color_id = c.id
-                INNER JOIN colecciones col ON p.coleccion_id = col.id 
+                INNER JOIN producto_colecciones pcol ON p.id = pcol.producto_id
+                INNER JOIN colecciones col ON pcol.coleccion_id = col.id 
                 LEFT JOIN imagenes_productos i ON p.id = i.producto_id AND i.color_id = c.id AND i.es_principal = 1
                 WHERE p.activo = 1 AND col.activa = 3
                 GROUP BY p.id, c.id
@@ -862,10 +892,12 @@ class Producto
 
     public function obtenerColoresColeccionSecreta()
     {
+        // ACTUALIZADO: INNER JOIN tabla puente
         $sql = "SELECT DISTINCT c.* FROM colores c 
             INNER JOIN producto_colores pc ON c.id = pc.color_id 
             INNER JOIN productos p ON pc.producto_id = p.id 
-            INNER JOIN colecciones col ON p.coleccion_id = col.id 
+            INNER JOIN producto_colecciones pcol ON p.id = pcol.producto_id
+            INNER JOIN colecciones col ON pcol.coleccion_id = col.id 
             WHERE p.activo = 1 AND col.activa = 3";
 
         $sentencia = $this->conexionDataBase->prepare($sql);
@@ -894,7 +926,11 @@ class Producto
 
             $precio = (float)$precio;
             $tipo_id = $tipo_id ? (int)$tipo_id : null;
-            $coleccion_id = $coleccion_id ? (int)$coleccion_id : null;
+            
+            // Adaptar para cuando viene un array (varias categorías)
+            $coleccion_id_primera = is_array($coleccion_id) ? ($coleccion_id[0] ?? null) : $coleccion_id;
+            $coleccion_id_primera = $coleccion_id_primera ? (int)$coleccion_id_primera : null;
+            
             $genero = (int)$genero;
             $color_id = (int)$color_id;
 
@@ -906,10 +942,20 @@ class Producto
                 ':descripcion' => $descripcion,
                 ':precio' => $precio,
                 ':tipo_id' => $tipo_id,
-                ':coleccion_id' => $coleccion_id,
+                ':coleccion_id' => $coleccion_id_primera, // Guardamos la primera para retrocompatibilidad
                 ':genero' => $genero
             ]);
             $idProducto = $this->conexionDataBase->lastInsertId();
+
+            // ACTUALIZADO: Insertar en la tabla puente todas las categorías seleccionadas
+            $stmtPivot = $this->conexionDataBase->prepare("INSERT IGNORE INTO producto_colecciones (producto_id, coleccion_id) VALUES (?, ?)");
+            if (is_array($coleccion_id)) {
+                foreach ($coleccion_id as $cid) {
+                     if($cid) $stmtPivot->execute([$idProducto, $cid]);
+                }
+            } else if ($coleccion_id) {
+                 $stmtPivot->execute([$idProducto, $coleccion_id]);
+            }
 
             $sqlColor = "INSERT INTO producto_colores (producto_id, color_id) VALUES (:id_prod, :id_color)";
             $sentenciaColor = $this->conexionDataBase->prepare($sqlColor);

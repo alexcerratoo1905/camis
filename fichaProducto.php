@@ -1,9 +1,6 @@
-<?php
-
-require_once "controllers/fichaProductoController.php";
-
-include './includes/header.php';
-
+<?php 
+require_once "controllers/fichaProductoController.php"; 
+include './includes/header.php'; 
 ?>
 
 <main id="mainProducto" class="container my-5 py-5 mt-5" data-id="<?php echo $datosPrenda['id']; ?>"
@@ -12,8 +9,8 @@ include './includes/header.php';
     data-imagen=""
     data-color-prenda=""
     data-rebaja="<?php echo isset($datosPrenda['rebaja']) ? (int)$datosPrenda['rebaja'] : 0; ?>">
-    <div class="row">
 
+    <div class="row">
         <div class="col-md-6 mb-4 mb-md-0">
             <div class="d-flex flex-column-reverse flex-md-row gap-3 h-100">
                 
@@ -46,13 +43,12 @@ include './includes/header.php';
                         <i class="bi bi-chevron-right"></i>
                     </button>
                 </div>
-
             </div>
         </div>
 
         <div class="col-md-6 ps-md-5 d-flex flex-column justify-content-center">
-
             <h1 class="display-5 fw-bold text-uppercase mb-2"><?php echo $datosPrenda["nombre"] ?> </h1>
+
             <div class="mb-4">
                 <?php 
                 $rebaja = isset($datosPrenda['rebaja']) ? (int)$datosPrenda['rebaja'] : 0;
@@ -74,27 +70,27 @@ include './includes/header.php';
             </div>
 
             <form action="controllers/carritoController.php" method="POST" class="mt-auto">
-
                 <input type="hidden" name="accion" value="agregar">
                 <input type="hidden" name="idPrenda" value="<?php echo $datosPrenda['id']; ?>">
                 <input type="hidden" name="color_id" id="input_color_id" value="">
 
                 <?php if (!empty($coloresProducto)) { ?>
                     <div class="mb-4">
-                        <label class="form-label text-uppercase m-0 mb-2" style="letter-spacing: 2px; font-size: 0.85rem;">Color / Equipación</label>
+                        <label class="form-label text-uppercase m-0 mb-2" style="letter-spacing: 2px; font-size: 0.85rem;">Equipación / Variante</label>
                         <div class="d-flex flex-wrap gap-2" id="contenedor-colores">
                             <?php foreach ($coloresProducto as $index => $color) {
+                                // Mantenemos las clases de tu JS para que siga funcionando todo perfecto
                                 $claseActivo = ($index == 0) ? 'border-dark' : 'border-light';
                             ?>
-                                <div class="color-swatch-wrapper rounded-circle border border-2 <?php echo $claseActivo; ?>"
-                                    style="cursor: pointer; transition: all 0.2s ease; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;"
+                                <div class="color-swatch-wrapper rounded-0 border border-2 <?php echo $claseActivo; ?> bg-white shadow-sm"
+                                    style="cursor: pointer; transition: all 0.2s ease; padding: 10px 20px; display: flex; align-items: center; justify-content: center;"
                                     data-color-id="<?php echo $color['id']; ?>"
                                     onclick="seleccionarColor(<?php echo $color['id']; ?>, this)">
-
-                                    <div class="color-swatch rounded-circle shadow-sm"
-                                        style="background-color: <?php echo $color['valor_hexadecimal']; ?>; width: 26px; height: 26px;"
-                                        title="<?php echo $color['nombre']; ?>">
-                                    </div>
+                                    
+                                    <span class="fw-bold text-uppercase text-dark" style="font-size: 0.85rem; letter-spacing: 1px;">
+                                        <?php echo $color['nombre']; ?>
+                                    </span>
+                                    
                                 </div>
                             <?php } ?>
                         </div>
@@ -138,14 +134,12 @@ include './includes/header.php';
                             <i class="bi bi-info-circle-fill ms-1 text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Mejora la calidad de la tela, detalles y estampados. Corte más ajustado. OJO: NO significa añadir el nombre de un jugador."></i>
                         </label>
                     </div>
-
                     <div class="form-check mb-2">
                         <input class="form-check-input border-dark extra-checkbox" type="checkbox" name="extra_pantalon" id="extra_pantalon" value="1">
                         <label class="form-check-label fw-bold" for="extra_pantalon">
                             Añadir Pantalón a juego (+10.00 €)
                         </label>
                     </div>
-
                     <div class="form-check mb-2">
                         <input class="form-check-input border-dark extra-checkbox" type="checkbox" name="tiene_parche" id="tiene_parche" value="1">
                         <label class="form-check-label fw-bold" for="tiene_parche">
@@ -155,7 +149,6 @@ include './includes/header.php';
                     <div class="mb-3 ms-4 d-none animate__animated animate__fadeIn" id="div_texto_parche">
                         <input type="text" class="form-control form-control-sm border-dark" name="texto_parche" placeholder="Especifica qué parches (Ej: Champions League, LFP...)">
                     </div>
-
                     <div class="form-check mb-2">
                         <input class="form-check-input border-dark extra-checkbox" type="checkbox" name="tiene_personalizacion" id="tiene_personalizacion" value="1">
                         <label class="form-check-label fw-bold" for="tiene_personalizacion">
@@ -175,7 +168,6 @@ include './includes/header.php';
                 </div>
 
                 <div class="d-flex align-items-center gap-3 mt-4 mb-2">
-
                     <button type="submit" class="add-to-cart flex-grow-1 m-0">
                         <span>Añadir al Carrito</span>
                         <svg class="morph" viewBox="0 0 64 13">
@@ -208,7 +200,7 @@ include './includes/header.php';
                     </button>
 
                     <?php
-                    $colorPorDefecto = !empty($coloresProducto) ? $coloresProducto['id'] : 0;
+                    $colorPorDefecto = !empty($coloresProducto) ? $coloresProducto[0]['id'] : 0;
                     $iconoCorazon = 'bi-heart';
                     if (isset($arrayFavoritos) && in_array($datosPrenda['id'] . '-' . $colorPorDefecto, $arrayFavoritos)) {
                         $iconoCorazon = 'bi-heart-fill';
@@ -221,7 +213,6 @@ include './includes/header.php';
                         data-color="<?php echo $colorPorDefecto; ?>">
                         <i class="bi <?php echo $iconoCorazon ?> fs-4"></i>
                     </button>
-
                 </div>
             </form>
         </div>
@@ -241,11 +232,12 @@ include './includes/header.php';
             </div>
         </div>
     </div>
+
 </main>
 
 <script>
     const listaFavoritosJS = <?php echo json_encode(isset($arrayFavoritos) ? $arrayFavoritos : []); ?>;
-
+    
     // SCRIPT PARA CAMBIAR LA FOTO DE LA GUIA DE TALLAS SEGÚN LA VERSIÓN
     function actualizarGuiaTallas() {
         let version = document.getElementById('version_genero').value;
@@ -262,13 +254,11 @@ include './includes/header.php';
         }
     }
 </script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.4.0/gsap.min.js"></script>
 <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/16327/MorphSVGPlugin3.min.js"></script>
-
 <script src="public/js/producto.js?v=3"></script>
 
-<?php
-include './includes/prendasRecientes.php';
-include './includes/footer.php';
+<?php 
+include './includes/prendasRecientes.php'; 
+include './includes/footer.php'; 
 ?>

@@ -18,7 +18,6 @@ $idUsu = $_SESSION["usuario_id"];
 $datosUsu = $usu->obtenerDatosUsu($idUsu);
 $pedido = new Pedido($conexion);
 $producto = new Producto($conexion);
-$listaProductos = $producto->listarInventarioCompleto();
 $listaColeciones = $producto->listarColecciones(true);
 $listaUsuarios = $usu->listarUsuarios();
 
@@ -142,8 +141,9 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                         case 'foto_eliminada': $msgTexto = "¡La imagen ha sido borrada permanentemente!"; break;
                         case 'fotos_anadidas': $msgTexto = "¡Nuevas fotos añadidas a la galería!"; break;
                         case 'variante_anadida': $msgTexto = "¡Nueva equipación añadida al producto con éxito!"; break;
+                        case 'variante_borrada': $msgTexto = "¡La variante (equipación) ha sido eliminada permanentemente!"; break;
                         case 'coleccion_creada': $msgTexto = "¡La nueva categoría se ha creado correctamente!"; break;
-                        case 'coleccion_actualizada': $msgTexto = "¡Categoría y descuentos guardados con éxito!"; break;
+                        case 'coleccion_actualizada': $msgTexto = "¡Categoría, precios y descuentos guardados con éxito!"; break;
                         case 'coleccion_borrada': $msgTexto = "¡La categoría ha sido borrada permanentemente de la base de datos!"; break;
                     }
                     if ($msgTexto != "") {
@@ -329,33 +329,112 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                 break;
 
                             // -----------------------------------------------------------------
-                            // 2. SECCIÓN PRODUCTOS: REJILLA BOOTSTRAP REAL (2 COLUMNAS SIMÉTRICAS)
+                            // 2. SECCIÓN PRODUCTOS: FILTRO DE CATEGORÍAS Y PAGINACIÓN AVANZADA
                             // -----------------------------------------------------------------
                             case 'productos':
-                                $prod = new Producto($db->conectar());
-
+                                
+                                $filtroColeccion = isset($_GET['filtro_coleccion']) ? (int)$_GET['filtro_coleccion'] : 0;
                                 $productosPorPagina = 10; 
                                 $paginaActual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
                                 if ($paginaActual < 1) $paginaActual = 1;
 
-                                $totalProductos = $prod->contarProductosPorTipo(false);
+                                // VERIFICAR SI EXISTE LA TABLA PIVOTE (Para retrocompatibilidad)
+                                $hasPivot = false;
+                                try {
+                                    $conexion->query("SELECT 1 FROM producto_colecciones LIMIT 1");
+                                    $hasPivot = true;
+                                } catch(PDOException $e) {}
+
+                                // 1. CONTAR TOTAL DE PRODUCTOS (Respetando el filtro si lo hay)
+                                $sqlCount = "SELECT COUNT(DISTINCT p.id) FROM productos p";
+                                $paramsCount = [];
+                                if ($filtroColeccion > 0) {
+                                    if ($hasPivot) {
+                                        $sqlCount .= " INNER JOIN producto_colecciones pc ON p.id = pc.producto_id WHERE p.es_segunda_mano = 0 AND pc.coleccion_id = ?";
+                                    } else {
+                                        $sqlCount .= " WHERE p.es_segunda_mano = 0 AND p.coleccion_id = ?";
+                                    }
+                                    $paramsCount[] = $filtroColeccion;
+                                } else {
+                                    $sqlCount .= " WHERE p.es_segunda_mano = 0";
+                                }
+
+                                $stmtC = $conexion->prepare($sqlCount);
+                                $stmtC->execute($paramsCount);
+                                $totalProductos = $stmtC->fetchColumn();
+
                                 $totalPaginas = ceil($totalProductos / $productosPorPagina);
                                 $offset = ($paginaActual - 1) * $productosPorPagina;
 
-                                $listaInventario = $prod->listarProductosPaginados(false, $productosPorPagina, $offset);
+                                // 2. OBTENER IDs DE ESTA PÁGINA ESPECÍFICA
+                                $sqlIds = "SELECT DISTINCT p.id FROM productos p";
+                                if ($filtroColeccion > 0) {
+                                    if ($hasPivot) {
+                                        $sqlIds .= " INNER JOIN producto_colecciones pc ON p.id = pc.producto_id WHERE p.es_segunda_mano = 0 AND pc.coleccion_id = ?";
+                                    } else {
+                                        $sqlIds .= " WHERE p.es_segunda_mano = 0 AND p.coleccion_id = ?";
+                                    }
+                                } else {
+                                    $sqlIds .= " WHERE p.es_segunda_mano = 0";
+                                }
+                                $sqlIds .= " ORDER BY p.id DESC LIMIT $productosPorPagina OFFSET $offset";
+                                
+                                $stmtIds = $conexion->prepare($sqlIds);
+                                $stmtIds->execute($paramsCount);
+                                $idsPagina = $stmtIds->fetchAll(PDO::FETCH_COLUMN);
 
+                                // 3. CARGAR VARIANTES Y COLECCIONES
+                                $listaInventario = [];
+                                $prodCols = [];
+
+                                if (!empty($idsPagina)) {
+                                    $inQuery = implode(',', $idsPagina);
+                                    
+                                    // Datos de productos
+                                    $sqlInv = "SELECT p.id as prenda_id, p.nombre, p.precio, p.rebaja, p.activo, p.destacado, p.coleccion_id, p.es_segunda_mano,
+                                                      c.id as color_id, c.nombre as nombre_color
+                                               FROM productos p
+                                               LEFT JOIN producto_colores pc ON p.id = pc.producto_id
+                                               LEFT JOIN colores c ON pc.color_id = c.id
+                                               WHERE p.id IN ($inQuery)
+                                               ORDER BY p.id DESC";
+                                    $stmtInv = $conexion->query($sqlInv);
+                                    $listaInventario = $stmtInv->fetchAll(PDO::FETCH_ASSOC);
+
+                                    // Si existe el pivote, cargamos todas las categorías de esos productos
+                                    if ($hasPivot) {
+                                        $sqlCols = "SELECT producto_id, coleccion_id FROM producto_colecciones WHERE producto_id IN ($inQuery)";
+                                        $stmtCols = $conexion->query($sqlCols);
+                                        $prodColsRaw = $stmtCols->fetchAll(PDO::FETCH_ASSOC);
+                                        foreach($prodColsRaw as $pc) {
+                                            $prodCols[$pc['producto_id']][] = $pc['coleccion_id'];
+                                        }
+                                    }
+                                }
+
+                                // 4. AGRUPAR VARIANTE Y COLECCIONES
                                 $productosAgrupados = [];
                                 if (!empty($listaInventario)) {
                                     foreach ($listaInventario as $item) {
                                         $pId = $item['prenda_id'];
                                         if (!isset($productosAgrupados[$pId])) {
+                                            
+                                            // Asignamos las colecciones (las múltiples si existe el pivote, o la individual si no)
+                                            $coleccionesDelProducto = [];
+                                            if ($hasPivot && isset($prodCols[$pId]) && !empty($prodCols[$pId])) {
+                                                $coleccionesDelProducto = $prodCols[$pId];
+                                            } else if (!empty($item['coleccion_id'])) {
+                                                $coleccionesDelProducto = [$item['coleccion_id']];
+                                            }
+
                                             $productosAgrupados[$pId] = [
                                                 'producto_id' => $item['prenda_id'],
                                                 'nombre' => $item['nombre'],
                                                 'precio' => $item['precio'],
                                                 'rebaja' => $item['rebaja'],
                                                 'activo' => $item['activo'],
-                                                'coleccion_id' => $item['coleccion_id'],
+                                                'destacado' => $item['destacado'], 
+                                                'colecciones' => $coleccionesDelProducto,
                                                 'es_segunda_mano' => $item['es_segunda_mano'],
                                                 'variantes' => []
                                             ];
@@ -369,16 +448,9 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                     }
                                 }
 
-                                // Limpiamos segunda mano
-                                $productosLimpios = [];
-                                foreach ($productosAgrupados as $id => $datos) {
-                                    if ($datos['es_segunda_mano'] == 1) continue;
-                                    $productosLimpios[$id] = $datos;
-                                }
-
-                                // PARTIMOS LOS PRODUCTOS EN DOS COLUMNAS DE 5 y 5
-                                $columnaIzq = array_slice($productosLimpios, 0, 5, true);
-                                $columnaDer = array_slice($productosLimpios, 5, 5, true);
+                                // PARTIMOS LOS PRODUCTOS EN DOS COLUMNAS
+                                $columnaIzq = array_slice($productosAgrupados, 0, 5, true);
+                                $columnaDer = array_slice($productosAgrupados, 5, 5, true);
                         ?>
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h3 class="fw-bold m-0 text-uppercase">Gestión de Inventario</h3>
@@ -387,12 +459,39 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                     </button>
                                 </div>
 
+                                <!-- BARRA DE FILTRO POR CATEGORÍAS -->
+                                <div class="card p-3 mb-4 bg-light border-dark shadow-sm">
+                                    <form method="GET" action="admin.php" class="row g-2 align-items-center">
+                                        <input type="hidden" name="seccion" value="productos">
+                                        <div class="col-auto">
+                                            <label class="fw-bold text-uppercase small"><i class="bi bi-funnel-fill me-1"></i> Filtrar por Liga/Categoría:</label>
+                                        </div>
+                                        <div class="col-md-5 col-12">
+                                            <select name="filtro_coleccion" class="form-select border-dark shadow-sm fw-bold">
+                                                <option value="0">--- VER TODO EL CATÁLOGO ---</option>
+                                                <?php foreach ($listaColeciones as $c) { 
+                                                    $sel = ($filtroColeccion == $c['id']) ? 'selected' : '';
+                                                    echo "<option value='{$c['id']}' $sel>{$c['nombre']}</option>";
+                                                } ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-auto">
+                                            <button type="submit" class="btn btn-dark fw-bold">Aplicar Filtro</button>
+                                        </div>
+                                        <?php if($filtroColeccion > 0): ?>
+                                            <div class="col-auto">
+                                                <a href="admin.php?seccion=productos" class="btn btn-outline-danger fw-bold"><i class="bi bi-x-circle me-1"></i> Quitar filtro</a>
+                                            </div>
+                                        <?php endif; ?>
+                                    </form>
+                                </div>
+
                                 <?php if ($totalPaginas > 1): ?>
                                     <div class="d-flex justify-content-center mb-4 pb-3 border-bottom">
                                         <nav aria-label="Paginación de inventario superior">
                                             <ul class="pagination mb-0 shadow-sm">
                                                 <?php $disabledPrev = ($paginaActual <= 1) ? 'disabled' : ''; ?>
-                                                <li class="page-item <?php echo $disabledPrev; ?>"><a class="page-link text-dark" href="admin.php?seccion=productos&pagina=<?= $paginaActual - 1 ?>">Anterior</a></li>
+                                                <li class="page-item <?php echo $disabledPrev; ?>"><a class="page-link text-dark" href="admin.php?seccion=productos&filtro_coleccion=<?= $filtroColeccion ?>&pagina=<?= $paginaActual - 1 ?>">Anterior</a></li>
                                                 
                                                 <?php 
                                                 $rango = 2; 
@@ -400,7 +499,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                 $fin = min($totalPaginas, $paginaActual + $rango);
 
                                                 if ($inicio > 1) {
-                                                    echo '<li class="page-item"><a class="page-link text-dark" href="admin.php?seccion=productos&pagina=1">1</a></li>';
+                                                    echo '<li class="page-item"><a class="page-link text-dark" href="admin.php?seccion=productos&filtro_coleccion='.$filtroColeccion.'&pagina=1">1</a></li>';
                                                     if ($inicio > 2) {
                                                         echo '<li class="page-item disabled"><span class="page-link text-dark border-0">...</span></li>';
                                                     }
@@ -408,19 +507,19 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
 
                                                 for ($i = $inicio; $i <= $fin; $i++) { 
                                                     $activa = ($i == $paginaActual) ? 'active bg-dark border-dark text-white' : 'text-dark'; 
-                                                    echo '<li class="page-item"><a class="page-link '.$activa.'" href="admin.php?seccion=productos&pagina='.$i.'">'.$i.'</a></li>';
+                                                    echo '<li class="page-item"><a class="page-link '.$activa.'" href="admin.php?seccion=productos&filtro_coleccion='.$filtroColeccion.'&pagina='.$i.'">'.$i.'</a></li>';
                                                 } 
 
                                                 if ($fin < $totalPaginas) {
                                                     if ($fin < $totalPaginas - 1) {
                                                         echo '<li class="page-item disabled"><span class="page-link text-dark border-0">...</span></li>';
                                                     }
-                                                    echo '<li class="page-item"><a class="page-link text-dark" href="admin.php?seccion=productos&pagina='.$totalPaginas.'">'.$totalPaginas.'</a></li>';
+                                                    echo '<li class="page-item"><a class="page-link text-dark" href="admin.php?seccion=productos&filtro_coleccion='.$filtroColeccion.'&pagina='.$totalPaginas.'">'.$totalPaginas.'</a></li>';
                                                 }
                                                 ?>
 
                                                 <?php $disabledNext = ($paginaActual >= $totalPaginas) ? 'disabled' : ''; ?>
-                                                <li class="page-item <?php echo $disabledNext; ?>"><a class="page-link text-dark" href="admin.php?seccion=productos&pagina=<?= $paginaActual + 1 ?>">Siguiente</a></li>
+                                                <li class="page-item <?php echo $disabledNext; ?>"><a class="page-link text-dark" href="admin.php?seccion=productos&filtro_coleccion=<?= $filtroColeccion ?>&pagina=<?= $paginaActual + 1 ?>">Siguiente</a></li>
                                             </ul>
                                         </nav>
                                     </div>
@@ -432,7 +531,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                         <form action="../controllers/adminController.php" method="POST" enctype="multipart/form-data" class="row g-3">
                                             <input type="hidden" name="accion" value="crearPrendaTienda">
 
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <label class="fw-bold small">Nombre del Producto:</label>
                                                 <input type="text" name="nombre" class="form-control border-dark" placeholder="Ej: Real Madrid 24/25" required>
                                             </div>
@@ -448,14 +547,15 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                     <option value="Tercera">Tercera Equipación</option>
                                                 </select>
                                             </div>
-                                            <div class="col-12 col-md-3">
-                                                <label class="fw-bold small">Categoría (Liga):</label>
-                                                <select name="coleccion_id" class="form-select border-dark" required>
-                                                    <option value="">Selecciona Liga...</option>
+                                            <!-- AÑADIDO SELECT MÚLTIPLE PARA CATEGORÍAS -->
+                                            <div class="col-12 col-md-4">
+                                                <label class="fw-bold small">Categoría/s (Ligas):</label>
+                                                <select name="coleccion_id[]" class="form-select border-dark" multiple size="3" required>
                                                     <?php foreach ($listaColeciones as $c) { ?>
                                                         <option value="<?php echo $c['id']; ?>"><?php echo $c['nombre']; ?></option>
                                                     <?php } ?>
                                                 </select>
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">(Ctrl/Cmd + Clic para seleccionar varias)</small>
                                             </div>
                                             <div class="col-md-12">
                                                 <label class="fw-bold small">Descripción (Opcional):</label>
@@ -481,9 +581,14 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                 <form action="../controllers/adminController.php" method="POST" id="formMasivo">
                                     <input type="hidden" name="accion" value="actualizarInventarioMasivo">
                                     <input type="hidden" name="pagina_retorno" value="<?php echo $paginaActual; ?>">
+                                    <input type="hidden" name="filtro_coleccion_retorno" value="<?php echo $filtroColeccion; ?>">
 
                                     <?php if (empty($columnaIzq) && empty($columnaDer)) { ?>
-                                        <div class="alert alert-secondary text-center py-5">No se han encontrado productos.</div>
+                                        <div class="alert alert-secondary text-center py-5">
+                                            <i class="bi bi-search display-4 d-block mb-3"></i>
+                                            <h4 class="fw-bold text-uppercase">Sin resultados</h4>
+                                            <p class="mb-0">No se han encontrado productos en esta categoría o página.</p>
+                                        </div>
                                     <?php } else { ?>
                                         
                                         <div class="row g-4">
@@ -504,11 +609,11 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                                             <input type="text" name="nombre[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($datos['nombre']); ?>" class="form-control form-control-sm border-0 bg-secondary text-dark fw-bold text-uppercase w-100" style="letter-spacing: 0.5px; background-color: #f8f9fa;" required>
                                                                         </div>
                                                                     </div>
+                                                                    <!-- AÑADIDO SELECT MÚLTIPLE DE CATEGORÍAS -->
                                                                     <div class="col-4 col-sm-3">
-                                                                        <select name="coleccion[<?php echo $id; ?>]" class="form-select form-select-sm border-0 bg-light text-dark fw-bold w-100" style="font-size: 0.75rem;">
-                                                                            <option value="">Sin Liga</option>
+                                                                        <select name="coleccion[<?php echo $id; ?>][]" class="form-select form-select-sm border-dark bg-light text-dark fw-bold w-100" style="font-size: 0.75rem; min-height: 70px;" multiple required>
                                                                             <?php foreach ($listaColeciones as $col) { 
-                                                                                $seleccionado = ($col['id'] == $datos['coleccion_id']) ? 'selected' : '';
+                                                                                $seleccionado = (in_array($col['id'], $datos['colecciones'])) ? 'selected' : '';
                                                                             ?>
                                                                                 <option value="<?php echo $col['id']; ?>" <?php echo $seleccionado; ?>><?php echo htmlspecialchars($col['nombre']); ?></option>
                                                                             <?php } ?>
@@ -532,6 +637,10 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                                                 <span class="input-group-text bg-secondary text-white border-0 small font-monospace">INFO</span>
                                                                                 <input type="text" name="descripcion[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($descReal ?? ''); ?>" class="form-control bg-dark text-white border-0 small" placeholder="Descripción breve">
                                                                             </div>
+                                                                            <select name="destacado[<?php echo $id; ?>]" class="form-select form-select-sm fw-bold border-0 w-auto me-2 <?php echo ($datos['destacado'] == 1 ? 'text-warning bg-dark' : 'text-muted'); ?>">
+                                                                                <option value="1" <?php echo ($datos['destacado'] == 1 ? 'selected' : ''); ?>>★ DEST</option>
+                                                                                <option value="0" <?php echo ($datos['destacado'] == 0 ? 'selected' : ''); ?>>NORMAL</option>
+                                                                            </select>
                                                                             <select name="activo[<?php echo $id; ?>]" class="form-select form-select-sm fw-bold border-0 w-auto <?php echo ($datos['activo'] == 1 ? 'text-success' : 'text-danger'); ?>">
                                                                                 <option value="1" <?php echo ($datos['activo'] == 1 ? 'selected' : ''); ?>>ACT</option>
                                                                                 <option value="0" <?php echo ($datos['activo'] == 0 ? 'selected' : ''); ?>>OCU</option>
@@ -573,11 +682,16 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                                         $fotosProducto = $stmtFotos->fetchAll(PDO::FETCH_ASSOC);
                                                                     ?>
                                                                     <div class="tab-pane fade <?= $isActive ?>" id="variante-<?= $id ?>-<?= $color_id ?>" role="tabpanel">
+                                                                        <div class="d-flex justify-content-end mb-2">
+                                                                            <a href="../controllers/adminController.php?accion=borrarVariante&p_id=<?= $id; ?>&c_id=<?= $color_id; ?>&pag=<?= $paginaActual; ?>&filtro=<?= $filtroColeccion; ?>" class="btn btn-sm btn-outline-danger py-1 px-2 fw-bold" style="font-size: 0.75rem;" onclick="return confirm('¿Estás seguro de que quieres eliminar TODA esta variante? Se borrarán todas sus fotos, stock y tallas de la base de datos.');">
+                                                                                <i class="bi bi-trash-fill"></i> Borrar Equipación
+                                                                            </a>
+                                                                        </div>
                                                                         <div class="d-flex flex-wrap align-items-center bg-light p-2 rounded border border-light gap-2">
                                                                             <?php foreach ($fotosProducto as $ft) { ?>
                                                                                 <div class="crm-thumb-container m-0">
                                                                                     <img src="../<?= htmlspecialchars($ft['url_imagen']); ?>" class="crm-thumb shadow-sm">
-                                                                                    <a href="../controllers/adminController.php?accion=borrarFotoEspecifica&id_foto=<?= $ft['id']; ?>&p_id=<?= $id; ?>&pag=<?= $paginaActual; ?>" class="btn-borrar-foto" onclick="return confirm('¿Borrar foto?');">×</a>
+                                                                                    <a href="../controllers/adminController.php?accion=borrarFotoEspecifica&id_foto=<?= $ft['id']; ?>&p_id=<?= $id; ?>&pag=<?= $paginaActual; ?>&filtro=<?= $filtroColeccion; ?>" class="btn-borrar-foto" onclick="return confirm('¿Borrar foto?');">×</a>
                                                                                 </div>
                                                                             <?php } ?>
                                                                             <button type="button" class="btn btn-outline-secondary bg-white shadow-sm d-flex align-items-center justify-content-center p-0" style="height: 55px; width: 55px; border-style: dashed; border-width: 2px;" onclick="document.getElementById('add-foto-input-<?= $id ?>-<?= $color_id ?>').click();" title="Añadir foto">
@@ -609,11 +723,11 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                                             <input type="text" name="nombre[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($datos['nombre']); ?>" class="form-control form-control-sm border-0 bg-secondary text-dark fw-bold text-uppercase w-100" style="letter-spacing: 0.5px; background-color: #f8f9fa;" required>
                                                                         </div>
                                                                     </div>
+                                                                    <!-- AÑADIDO SELECT MÚLTIPLE DE CATEGORÍAS -->
                                                                     <div class="col-4 col-sm-3">
-                                                                        <select name="coleccion[<?php echo $id; ?>]" class="form-select form-select-sm border-0 bg-light text-dark fw-bold w-100" style="font-size: 0.75rem;">
-                                                                            <option value="">Sin Liga</option>
+                                                                        <select name="coleccion[<?php echo $id; ?>][]" class="form-select form-select-sm border-dark bg-light text-dark fw-bold w-100" style="font-size: 0.75rem; min-height: 70px;" multiple required>
                                                                             <?php foreach ($listaColeciones as $col) { 
-                                                                                $seleccionado = ($col['id'] == $datos['coleccion_id']) ? 'selected' : '';
+                                                                                $seleccionado = (in_array($col['id'], $datos['colecciones'])) ? 'selected' : '';
                                                                             ?>
                                                                                 <option value="<?php echo $col['id']; ?>" <?php echo $seleccionado; ?>><?php echo htmlspecialchars($col['nombre']); ?></option>
                                                                             <?php } ?>
@@ -637,6 +751,10 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                                             <span class="input-group-text bg-secondary text-white border-0 small font-monospace">INFO</span>
                                                                             <input type="text" name="descripcion[<?php echo $id; ?>]" value="<?php echo htmlspecialchars($descReal ?? ''); ?>" class="form-control bg-dark text-white border-0 small" placeholder="Descripción breve">
                                                                         </div>
+                                                                        <select name="destacado[<?php echo $id; ?>]" class="form-select form-select-sm fw-bold border-0 w-auto me-2 <?php echo ($datos['destacado'] == 1 ? 'text-warning bg-dark' : 'text-muted'); ?>">
+                                                                            <option value="1" <?php echo ($datos['destacado'] == 1 ? 'selected' : ''); ?>>★ DEST</option>
+                                                                            <option value="0" <?php echo ($datos['destacado'] == 0 ? 'selected' : ''); ?>>NORMAL</option>
+                                                                        </select>
                                                                         <select name="activo[<?php echo $id; ?>]" class="form-select form-select-sm fw-bold border-0 w-auto <?php echo ($datos['activo'] == 1 ? 'text-success' : 'text-danger'); ?>">
                                                                             <option value="1" <?php echo ($datos['activo'] == 1 ? 'selected' : ''); ?>>ACT</option>
                                                                             <option value="0" <?php echo ($datos['activo'] == 0 ? 'selected' : ''); ?>>OCU</option>
@@ -678,11 +796,16 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                                     $fotosProducto = $stmtFotos->fetchAll(PDO::FETCH_ASSOC);
                                                                 ?>
                                                                 <div class="tab-pane fade <?= $isActive ?>" id="variante-<?= $id ?>-<?= $color_id ?>" role="tabpanel">
+                                                                    <div class="d-flex justify-content-end mb-2">
+                                                                        <a href="../controllers/adminController.php?accion=borrarVariante&p_id=<?= $id; ?>&c_id=<?= $color_id; ?>&pag=<?= $paginaActual; ?>&filtro=<?= $filtroColeccion; ?>" class="btn btn-sm btn-outline-danger py-1 px-2 fw-bold" style="font-size: 0.75rem;" onclick="return confirm('¿Estás seguro de que quieres eliminar TODA esta variante? Se borrarán todas sus fotos, stock y tallas de la base de datos.');">
+                                                                            <i class="bi bi-trash-fill"></i> Borrar Equipación
+                                                                        </a>
+                                                                    </div>
                                                                     <div class="d-flex flex-wrap align-items-center bg-light p-2 rounded border border-light gap-2">
                                                                         <?php foreach ($fotosProducto as $ft) { ?>
                                                                             <div class="crm-thumb-container m-0">
                                                                                 <img src="../<?= htmlspecialchars($ft['url_imagen']); ?>" class="crm-thumb shadow-sm">
-                                                                                <a href="../controllers/adminController.php?accion=borrarFotoEspecifica&id_foto=<?= $ft['id']; ?>&p_id=<?= $id; ?>&pag=<?= $paginaActual; ?>" class="btn-borrar-foto" onclick="return confirm('¿Borrar foto?');">×</a>
+                                                                                <a href="../controllers/adminController.php?accion=borrarFotoEspecifica&id_foto=<?= $ft['id']; ?>&p_id=<?= $id; ?>&pag=<?= $paginaActual; ?>&filtro=<?= $filtroColeccion; ?>" class="btn-borrar-foto" onclick="return confirm('¿Borrar foto?');">×</a>
                                                                             </div>
                                                                         <?php } ?>
                                                                         <button type="button" class="btn btn-outline-secondary bg-white shadow-sm d-flex align-items-center justify-content-center p-0" style="height: 55px; width: 55px; border-style: dashed; border-width: 2px;" onclick="document.getElementById('add-foto-input-<?= $id ?>-<?= $color_id ?>').click();" title="Añadir foto">
@@ -714,7 +837,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                     </div>
                                 </form>
 
-                                <?php foreach ($productosLimpios as $id => $datos) { ?>
+                                <?php foreach ($productosAgrupados as $id => $datos) { ?>
                                     <div class="modal fade" id="modalVariante<?php echo $id; ?>" tabindex="-1">
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content border-dark rounded-0 shadow-lg">
@@ -727,6 +850,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                         <input type="hidden" name="accion" value="anadirEquipacionExtra">
                                                         <input type="hidden" name="producto_id" value="<?php echo $id; ?>">
                                                         <input type="hidden" name="pagina_retorno" value="<?php echo $paginaActual; ?>">
+                                                        <input type="hidden" name="filtro_coleccion_retorno" value="<?php echo $filtroColeccion; ?>">
                                                         
                                                         <div class="mb-3">
                                                             <label class="form-label fw-bold small text-uppercase">Modelo Base:</label>
@@ -762,6 +886,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                             <input type="hidden" name="producto_id" value="<?= $id ?>">
                                             <input type="hidden" name="color_id" value="<?= $color_id ?>">
                                             <input type="hidden" name="pagina_retorno" value="<?= $paginaActual ?>">
+                                            <input type="hidden" name="filtro_coleccion_retorno" value="<?= $filtroColeccion; ?>">
                                             <input type="file" id="add-foto-input-<?= $id ?>-<?= $color_id ?>" name="imagenes[]" onchange="document.getElementById('form-add-foto-<?= $id ?>-<?= $color_id ?>').submit();" multiple>
                                         </form>
                                     <?php } ?>
@@ -809,6 +934,7 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                 <th>ID</th>
                                                 <th>Nombre Categoría</th>
                                                 <th>Descripción</th>
+                                                <th>Precio Masivo</th>
                                                 <th>Rebaja Masiva</th>
                                                 <th>Estado</th>
                                                 <th>Acciones</th>
@@ -816,10 +942,17 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                         </thead>
                                         <tbody>
                                             <?php foreach ($todasLasColecciones as $col) { 
+                                                // Consultar el descuento actual de la liga como referencia
                                                 $stmtReb = $conexion->prepare("SELECT rebaja FROM productos WHERE coleccion_id = ? AND rebaja > 0 LIMIT 1");
                                                 $stmtReb->execute([$col['id']]);
                                                 $rebajaRealCol = $stmtReb->fetchColumn();
                                                 $mostrarRebaja = $rebajaRealCol ? (int)$rebajaRealCol : 0;
+
+                                                // Consultar el precio actual del primer producto de la liga como referencia
+                                                $stmtPrecio = $conexion->prepare("SELECT precio FROM productos WHERE coleccion_id = ? LIMIT 1");
+                                                $stmtPrecio->execute([$col['id']]);
+                                                $precioRefCol = $stmtPrecio->fetchColumn();
+                                                $mostrarPrecio = $precioRefCol ? number_format((float)$precioRefCol, 2, '.', '') : '';
                                             ?>
                                                 <tr>
                                                     <td class="text-center text-secondary fw-bold">#<?php echo $col['id']; ?></td>
@@ -828,6 +961,13 @@ $seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'pedidos';
                                                     </td>
                                                     <td>
                                                         <textarea name="descripcion" class="form-control form-control-sm border-dark" rows="1" form="form_col_<?php echo $col['id']; ?>"><?php echo htmlspecialchars($col['descripcion'] ?? ''); ?></textarea>
+                                                    </td>
+                                                    <td>
+                                                        <div class="input-group input-group-sm">
+                                                            <input type="number" step="0.01" name="precio_masivo" class="form-control border-dark text-center fw-bold text-primary" value="<?php echo $mostrarPrecio; ?>" min="0" placeholder="Ej: 19.99" form="form_col_<?php echo $col['id']; ?>">
+                                                            <span class="input-group-text bg-dark text-white border-dark">€</span>
+                                                        </div>
+                                                        <small class="text-muted d-block text-center mt-1" style="font-size: 0.65rem;">Se aplica a toda la liga</small>
                                                     </td>
                                                     <td>
                                                         <div class="input-group input-group-sm">

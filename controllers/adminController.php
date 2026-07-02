@@ -24,8 +24,58 @@ if (!empty($accion)) {
     switch ($accion) {
         
         // ====================================================
-        // NUEVO: BORRAR CATEGORÍA DIRECTAMENTE DE LA BBDD
+        // BORRAR VARIANTE (EQUIPACIÓN) COMPLETA
         // ====================================================
+        case 'borrarVariante':
+            $idProducto = (int)($_GET['p_id'] ?? 0);
+            $idColor = (int)($_GET['c_id'] ?? 0);
+            $paginaRetorno = (int)($_GET['pag'] ?? 1);
+            $filtroColeccion = (int)($_GET['filtro'] ?? 0);
+
+            if ($idProducto > 0 && $idColor > 0) {
+                try {
+                    $conexion->beginTransaction();
+
+                    // 1. Borrar archivos físicos
+                    $stmtFotos = $conexion->prepare("SELECT url_imagen FROM imagenes_productos WHERE producto_id = ? AND color_id = ?");
+                    $stmtFotos->execute([$idProducto, $idColor]);
+                    $fotos = $stmtFotos->fetchAll(PDO::FETCH_ASSOC);
+
+                    foreach ($fotos as $foto) {
+                        $rutaFisica = __DIR__ . '/../' . $foto['url_imagen'];
+                        if (file_exists($rutaFisica)) {
+                            unlink($rutaFisica);
+                        }
+                    }
+
+                    // 2. Borrar BD
+                    $stmtDelFotos = $conexion->prepare("DELETE FROM imagenes_productos WHERE producto_id = ? AND color_id = ?");
+                    $stmtDelFotos->execute([$idProducto, $idColor]);
+
+                    $stmtDelTallas = $conexion->prepare("DELETE FROM producto_tallas WHERE producto_id = ? AND color_id = ?");
+                    $stmtDelTallas->execute([$idProducto, $idColor]);
+
+                    $stmtDelColor = $conexion->prepare("DELETE FROM producto_colores WHERE producto_id = ? AND color_id = ?");
+                    $stmtDelColor->execute([$idProducto, $idColor]);
+
+                    $conexion->commit();
+                    
+                    $urlDestino = "../admin/admin.php?seccion=productos&pagina=$paginaRetorno&mensaje=variante_borrada";
+                    if ($filtroColeccion > 0) $urlDestino .= "&filtro_coleccion=$filtroColeccion";
+                    header("Location: $urlDestino");
+                    exit();
+
+                } catch (Exception $e) {
+                    $conexion->rollBack();
+                    die("Error al eliminar la variante: " . $e->getMessage());
+                }
+            }
+            $urlDestinoErr = "../admin/admin.php?seccion=productos&pagina=$paginaRetorno&error=1";
+            if ($filtroColeccion > 0) $urlDestinoErr .= "&filtro_coleccion=$filtroColeccion";
+            header("Location: $urlDestinoErr");
+            exit();
+            break;
+
         case 'borrarColeccion':
             $idCol = (int)($_GET['id'] ?? 0);
             if ($idCol > 0) {
@@ -46,6 +96,7 @@ if (!empty($accion)) {
             $producto_id = (int)$_POST['producto_id'];
             $equipacion = $_POST['equipacion']; 
             $paginaRetorno = (int)($_POST['pagina_retorno'] ?? 1);
+            $filtroColeccion = (int)($_POST['filtro_coleccion_retorno'] ?? 0);
 
             try {
                 $conexion->beginTransaction();
@@ -92,7 +143,10 @@ if (!empty($accion)) {
                 }
 
                 $conexion->commit();
-                header("Location: ../admin/admin.php?seccion=productos&pagina=$paginaRetorno&mensaje=variante_anadida");
+                
+                $urlDestino = "../admin/admin.php?seccion=productos&pagina=$paginaRetorno&mensaje=variante_anadida";
+                if ($filtroColeccion > 0) $urlDestino .= "&filtro_coleccion=$filtroColeccion";
+                header("Location: $urlDestino");
                 exit();
 
             } catch (Exception $e) {
@@ -108,9 +162,18 @@ if (!empty($accion)) {
             $descripciones = isset($_POST['descripcion']) ? $_POST['descripcion'] : [];
             $rebajas = isset($_POST['rebaja']) ? $_POST['rebaja'] : [];
             $estados = isset($_POST['activo']) ? $_POST['activo'] : [];
+            $destacados = isset($_POST['destacado']) ? $_POST['destacado'] : []; 
             $precios = isset($_POST['precio']) ? $_POST['precio'] : []; 
             $colecciones = isset($_POST['coleccion']) ? $_POST['coleccion'] : []; 
             $pagRetorno = isset($_POST['pagina_retorno']) ? $_POST['pagina_retorno'] : 1;
+            $filtroColeccion = isset($_POST['filtro_coleccion_retorno']) ? (int)$_POST['filtro_coleccion_retorno'] : 0;
+
+            // Determinar si ya se migró a la tabla intermedia
+            $hasPivot = false;
+            try {
+                $conexion->query("SELECT 1 FROM producto_colecciones LIMIT 1");
+                $hasPivot = true;
+            } catch(PDOException $e) {}
 
             try {
                 $conexion->beginTransaction();
@@ -119,16 +182,34 @@ if (!empty($accion)) {
                     $nombreAct = trim($nombres[$idPrenda] ?? '');
                     $descAct = trim($descripciones[$idPrenda] ?? '');
                     $estadoActivo = $estados[$idPrenda];
+                    $estadoDestacado = $destacados[$idPrenda] ?? 0;
                     $precioActualizado = $precios[$idPrenda] ?? 0.00;
-                    $coleccionActualizada = !empty($colecciones[$idPrenda]) ? $colecciones[$idPrenda] : null; 
+                    
+                    $coleccionesActualizadas = isset($colecciones[$idPrenda]) && is_array($colecciones[$idPrenda]) ? $colecciones[$idPrenda] : [];
+                    $primeraColeccion = !empty($coleccionesActualizadas) ? $coleccionesActualizadas[0] : null;
 
-                    $sqlUp = "UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, rebaja = ?, activo = ?, coleccion_id = ? WHERE id = ?";
+                    // Seguimos guardando el primer ID en productos.coleccion_id para que no rompa el front-end actual
+                    $sqlUp = "UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, rebaja = ?, activo = ?, destacado = ?, coleccion_id = ? WHERE id = ?";
                     $stmtUp = $conexion->prepare($sqlUp);
-                    $stmtUp->execute([$nombreAct, $descAct, $precioActualizado, $valorRebaja, $estadoActivo, $coleccionActualizada, $idPrenda]);
+                    $stmtUp->execute([$nombreAct, $descAct, $precioActualizado, $valorRebaja, $estadoActivo, $estadoDestacado, $primeraColeccion, $idPrenda]);
+                    
+                    // Si ya existe la tabla intermedia, insertamos todas
+                    if ($hasPivot) {
+                        $stmtDel = $conexion->prepare("DELETE FROM producto_colecciones WHERE producto_id = ?");
+                        $stmtDel->execute([$idPrenda]);
+                        
+                        $stmtPivot = $conexion->prepare("INSERT IGNORE INTO producto_colecciones (producto_id, coleccion_id) VALUES (?, ?)");
+                        foreach($coleccionesActualizadas as $cid) {
+                            $stmtPivot->execute([$idPrenda, $cid]);
+                        }
+                    }
                 }
                 
                 $conexion->commit();
-                header("Location: ../admin/admin.php?seccion=productos&pagina=$pagRetorno&mensaje=inventario_actualizado");
+                
+                $urlDestino = "../admin/admin.php?seccion=productos&pagina=$pagRetorno&mensaje=inventario_actualizado";
+                if ($filtroColeccion > 0) $urlDestino .= "&filtro_coleccion=$filtroColeccion";
+                header("Location: $urlDestino");
                 exit();
             } catch (Exception $e) {
                 $conexion->rollBack();
@@ -140,6 +221,7 @@ if (!empty($accion)) {
             $idFoto = (int)($_GET['id_foto'] ?? 0);
             $idProducto = (int)($_GET['p_id'] ?? 0);
             $paginaRetorno = (int)($_GET['pag'] ?? 1);
+            $filtroColeccion = (int)($_GET['filtro'] ?? 0);
 
             if ($idFoto > 0) {
                 try {
@@ -155,13 +237,18 @@ if (!empty($accion)) {
                     $stmtDel = $conexion->prepare("DELETE FROM imagenes_productos WHERE id = ?");
                     $stmtDel->execute([$idFoto]);
 
-                    header("Location: ../admin/admin.php?seccion=productos&pagina=$paginaRetorno&mensaje=foto_eliminada");
+                    $urlDestino = "../admin/admin.php?seccion=productos&pagina=$paginaRetorno&mensaje=foto_eliminada";
+                    if ($filtroColeccion > 0) $urlDestino .= "&filtro_coleccion=$filtroColeccion";
+                    header("Location: $urlDestino");
                     exit();
                 } catch (Exception $e) {
                     die("Error al eliminar la foto: " . $e->getMessage());
                 }
             }
-            header("Location: ../admin/admin.php?seccion=productos&pagina=$paginaRetorno&error=1");
+            
+            $urlDestinoErr = "../admin/admin.php?seccion=productos&pagina=$paginaRetorno&error=1";
+            if ($filtroColeccion > 0) $urlDestinoErr .= "&filtro_coleccion=$filtroColeccion";
+            header("Location: $urlDestinoErr");
             exit();
             break;
 
@@ -169,6 +256,7 @@ if (!empty($accion)) {
             $idProducto = (int)($_POST['producto_id'] ?? 0);
             $color_id = (int)($_POST['color_id'] ?? 1); 
             $paginaRetorno = (int)($_POST['pagina_retorno'] ?? 1);
+            $filtroColeccion = (int)($_POST['filtro_coleccion_retorno'] ?? 0);
 
             if ($idProducto > 0 && isset($_FILES['imagenes'])) {
                 try {
@@ -196,14 +284,20 @@ if (!empty($accion)) {
                         }
                     }
                     $conexion->commit();
-                    header("Location: ../admin/admin.php?seccion=productos&pagina=$paginaRetorno&mensaje=fotos_anadidas");
+                    
+                    $urlDestino = "../admin/admin.php?seccion=productos&pagina=$paginaRetorno&mensaje=fotos_anadidas";
+                    if ($filtroColeccion > 0) $urlDestino .= "&filtro_coleccion=$filtroColeccion";
+                    header("Location: $urlDestino");
                     exit();
                 } catch (Exception $e) {
                     $conexion->rollBack();
                     die("Error al añadir fotos: " . $e->getMessage());
                 }
             }
-            header("Location: ../admin/admin.php?seccion=productos&pagina=$paginaRetorno&error=1");
+            
+            $urlDestinoErr = "../admin/admin.php?seccion=productos&pagina=$paginaRetorno&error=1";
+            if ($filtroColeccion > 0) $urlDestinoErr .= "&filtro_coleccion=$filtroColeccion";
+            header("Location: $urlDestinoErr");
             exit();
             break;
 
@@ -211,9 +305,18 @@ if (!empty($accion)) {
             if ($_SERVER["REQUEST_METHOD"] !== "POST") exit();
             $nombre = trim($_POST['nombre']);
             $precio = $_POST['precio'];
-            $coleccion_id = $_POST['coleccion_id']; 
+            $colecciones_ids = $_POST['coleccion_id'] ?? [];
             $descripcion = $_POST['descripcion'] ?? '';
             $equipacion = $_POST['equipacion']; 
+
+            // Para no romper el front-end antiguo, insertamos al menos el primero en la tabla vieja
+            $primera_coleccion = !empty($colecciones_ids) ? $colecciones_ids[0] : null;
+
+            $hasPivot = false;
+            try {
+                $conexion->query("SELECT 1 FROM producto_colecciones LIMIT 1");
+                $hasPivot = true;
+            } catch(PDOException $e) {}
 
             try {
                 $conexion->beginTransaction();
@@ -233,8 +336,16 @@ if (!empty($accion)) {
                 $sqlInsertProd = "INSERT INTO productos (nombre, precio, descripcion, coleccion_id, genero, tipo_id, activo) 
                                   VALUES (?, ?, ?, ?, 3, 1, 1)";
                 $stmtProd = $conexion->prepare($sqlInsertProd);
-                $stmtProd->execute([$nombre, $precio, $descripcion, $coleccion_id]);
+                $stmtProd->execute([$nombre, $precio, $descripcion, $primera_coleccion]);
                 $producto_id = $conexion->lastInsertId();
+                
+                // Si existe la nueva tabla, insertamos TODAS las categorías
+                if ($hasPivot) {
+                    $stmtPivot = $conexion->prepare("INSERT IGNORE INTO producto_colecciones (producto_id, coleccion_id) VALUES (?, ?)");
+                    foreach($colecciones_ids as $cid) {
+                        $stmtPivot->execute([$producto_id, $cid]);
+                    }
+                }
 
                 $stmtProdColor = $conexion->prepare("INSERT INTO producto_colores (producto_id, color_id) VALUES (?, ?)");
                 $stmtProdColor->execute([$producto_id, $color_id]);
@@ -267,7 +378,9 @@ if (!empty($accion)) {
                 }
 
                 $conexion->commit();
-                header("Location: ../admin/admin.php?seccion=productos&mensaje=prenda_subida");
+                
+                $urlDestino = "../admin/admin.php?seccion=productos&mensaje=prenda_subida&filtro_coleccion=$primera_coleccion";
+                header("Location: $urlDestino");
                 exit();
 
             } catch (Exception $e) {
@@ -303,13 +416,35 @@ if (!empty($accion)) {
             $nuevoEstado = isset($_POST['nuevo_estado']) ? (int)$_POST['nuevo_estado'] : 2;
             
             $descuentoMasivo = isset($_POST['descuento_masivo']) && $_POST['descuento_masivo'] !== "" ? (int)$_POST['descuento_masivo'] : null;
+            $precioMasivo = isset($_POST['precio_masivo']) && $_POST['precio_masivo'] !== "" ? (float)$_POST['precio_masivo'] : null;
 
             $prodObj = new Producto($conexion);
             $prodObj->actualizarEstadoColeccion($idCol, $nombre, $descripcion, $nuevoEstado);
             
+            $hasPivot = false;
+            try {
+                $conexion->query("SELECT 1 FROM producto_colecciones LIMIT 1");
+                $hasPivot = true;
+            } catch(PDOException $e) {}
+
+            // Aplicar descuento masivo
             if ($descuentoMasivo !== null) {
-                $stmtRebaja = $conexion->prepare("UPDATE productos SET rebaja = ? WHERE coleccion_id = ?");
+                if ($hasPivot) {
+                    $stmtRebaja = $conexion->prepare("UPDATE productos p INNER JOIN producto_colecciones pc ON p.id = pc.producto_id SET p.rebaja = ? WHERE pc.coleccion_id = ?");
+                } else {
+                    $stmtRebaja = $conexion->prepare("UPDATE productos SET rebaja = ? WHERE coleccion_id = ?");
+                }
                 $stmtRebaja->execute([$descuentoMasivo, $idCol]);
+            }
+            
+            // Aplicar precio masivo
+            if ($precioMasivo !== null && $precioMasivo >= 0) {
+                if ($hasPivot) {
+                    $stmtPrecio = $conexion->prepare("UPDATE productos p INNER JOIN producto_colecciones pc ON p.id = pc.producto_id SET p.precio = ? WHERE pc.coleccion_id = ?");
+                } else {
+                    $stmtPrecio = $conexion->prepare("UPDATE productos SET precio = ? WHERE coleccion_id = ?");
+                }
+                $stmtPrecio->execute([$precioMasivo, $idCol]);
             }
 
             header("Location: ../admin/admin.php?seccion=colecciones&mensaje=coleccion_actualizada");
