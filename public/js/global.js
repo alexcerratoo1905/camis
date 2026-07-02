@@ -205,6 +205,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         if (datos.accion === 'agregado') {
                             icono.classList.remove('bi-heart');
                             icono.classList.add('bi-heart-fill');
+                            icono.classList.add('text-danger');
+                            botonClick.classList.add('border-danger');
 
                             if (typeof listaFavoritosJS !== 'undefined') {
                                 listaFavoritosJS.push(comboMemoria);
@@ -213,6 +215,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         else if (datos.accion === 'eliminado') {
 
                             icono.classList.remove('bi-heart-fill');
+                            icono.classList.remove('text-danger');
+                            botonClick.classList.remove('border-danger');
                             icono.classList.add('bi-heart');
 
                             if (typeof listaFavoritosJS !== 'undefined') {
@@ -286,12 +290,14 @@ function pintarPrendasRecientes() {
 
         if (index % 4 === 0) {
             let activeClass = index === 0 ? "active" : "";
-            htmlAcumulado += `<div class="carousel-item ${activeClass}" data-bs-interval="3000"><div class="row">`;
+            htmlAcumulado += `<div class="carousel-item ${activeClass}" data-bs-interval="4000"><div class="row">`;
         }
 
         let iconoCorazon = 'bi-heart';
+        let claseBordeDanger = '';
         if (typeof listaFavoritosJS !== 'undefined' && listaFavoritosJS.includes(prenda.id + '-' + prenda.colorPrenda)) {
-            iconoCorazon = 'bi-heart-fill';
+            iconoCorazon = 'bi-heart-fill text-danger';
+            claseBordeDanger = 'border-danger';
         }
 
         let rebaja = 0;
@@ -300,7 +306,7 @@ function pintarPrendasRecientes() {
         }
 
         let precioNormal = parseFloat((prenda.precio || '0').toString().replace(',', '.'));
-        let htmlPrecio = `<p class="card-text mb-0 fw-bold">${precioNormal.toFixed(2)} €</p>`;
+        let htmlPrecio = `<p class="card-text mb-0 fw-bold text-dark">${precioNormal.toFixed(2)} €</p>`;
         let htmlBadge = '';
 
 
@@ -308,12 +314,12 @@ function pintarPrendasRecientes() {
             
             let precioFinal = precioNormal - (precioNormal * rebaja / 100);
             
-            htmlBadge = `<span class="position-absolute top-0 end-0 m-2 badge bg-danger text-white rounded-0 fw-bold px-2 py-1 shadow-sm" style="font-size: 0.8rem; letter-spacing: 1px; z-index: 10;">-${rebaja}%</span>`;
+            htmlBadge = `<span class="position-absolute top-0 end-0 m-2 badge bg-dark text-white rounded-0 fw-bold px-2 py-1 shadow-sm" style="font-size: 0.75rem; letter-spacing: 1px; z-index: 10;">-${rebaja}%</span>`;
             
             htmlPrecio = `
                 <p class="card-text mb-0">
                     <span class="text-muted text-decoration-line-through small me-2">${precioNormal.toFixed(2)} €</span>
-                    <span class="fw-bold text-danger">${precioFinal.toFixed(2)} €</span>
+                    <span class="fw-bold text-dark">${precioFinal.toFixed(2)} €</span>
                 </p>
             `;
         }
@@ -322,7 +328,7 @@ function pintarPrendasRecientes() {
             <div class="col-6 col-md-3 position-relative d-flex flex-column mb-4">
                 <div class="card product-card border-0 bg-transparent position-relative">
                     
-                    <div class="img-wrapper position-relative overflow-hidden">
+                    <div class="img-wrapper position-relative overflow-hidden shadow-sm rounded-3">
                         
                         <a href="fichaProducto.php?idPrenda=${prenda.id}&color=${prenda.colorPrenda}" class="text-decoration-none text-dark d-block">
                             ${htmlBadge}
@@ -339,12 +345,27 @@ function pintarPrendasRecientes() {
                         </div>
                     </div>
                     
-                    <div class="card-body text-center px-0 pb-1 mt-2">
+                    <div class="card-body text-center px-0 pb-1 mt-3">
                         <a href="fichaProducto.php?idPrenda=${prenda.id}&color=${prenda.colorPrenda}" class="text-decoration-none text-dark d-block">
-                            <h5 class="card-title text-uppercase fw-bold fs-6 mb-1 text-truncate">${prenda.nombre}</h5>
+                            <h5 class="card-title text-uppercase fw-bold fs-6 mb-1 text-truncate" style="letter-spacing: 0.5px;">${prenda.nombre}</h5>
                             ${htmlPrecio}
                         </a>
                     </div>
+                </div>
+                
+                <div class="d-flex align-items-center justify-content-between gap-2 mt-2 px-1">
+                    <button type="button" class="btn btn-outline-dark rounded-pill flex-grow-1 text-uppercase fw-bold"
+                        style="height: 38px; font-size: 0.7rem; letter-spacing: 1px; transition: all 0.3s;"
+                        onclick="abrirOverlayTallas(event, ${prenda.id}, ${prenda.colorPrenda})">
+                        Añadir <i class="bi bi-plus-lg ms-1"></i>
+                    </button>
+                    
+                    <button type="button" class="btn btn-toggle-favorito btn-favorito-custom btn-favorito-std d-flex justify-content-center align-items-center rounded-circle m-0 ${claseBordeDanger}"
+                        style="border-color: #000; width: 38px; height: 38px;"
+                        data-id="${prenda.id}"
+                        data-color="${prenda.colorPrenda}">
+                        <i class="bi ${iconoCorazon}"></i>
+                    </button>
                 </div>
             </div>
         `;

@@ -6,13 +6,11 @@
         <div class="carousel-inner px-2 px-md-5" id="carruselRecientesInner">
         </div>
 
-        <button class="carousel-control-prev d-none d-md-flex" type="button" data-bs-target="#carruselPrendasRecientes" data-bs-slide="prev" style="width: 5%;">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Anterior</span>
+        <button class="carousel-control-prev d-none d-md-flex" type="button" data-bs-target="#carruselPrendasRecientes" data-bs-slide="prev" style="width: 5%; justify-content: flex-start;">
+            <i class="bi bi-arrow-left text-dark fs-2"></i>
         </button>
-        <button class="carousel-control-next d-none d-md-flex" type="button" data-bs-target="#carruselPrendasRecientes" data-bs-slide="next" style="width: 5%;">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Siguiente</span>
+        <button class="carousel-control-next d-none d-md-flex" type="button" data-bs-target="#carruselPrendasRecientes" data-bs-slide="next" style="width: 5%; justify-content: flex-end;">
+            <i class="bi bi-arrow-right text-dark fs-2"></i>
         </button>
     </div>
 </section>

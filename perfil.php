@@ -1,11 +1,9 @@
-<?php
-require_once 'includes/auth.php';
-require_once 'controllers/perfilController.php';
-
-$seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'datos';
-include './includes/header.php';
+<?php 
+require_once 'includes/auth.php'; 
+require_once 'controllers/perfilController.php'; 
+$seccion = isset($_GET['seccion']) ? $_GET['seccion'] : 'datos'; 
+include './includes/header.php'; 
 ?>
-
 <main class="container my-5 py-5 mt-5">
     <div class="row">
         <aside class="col-lg-3 mb-4">
@@ -27,8 +25,6 @@ include './includes/header.php';
                         <a href="perfil.php?seccion=datos" class="list-group-item list-group-item-action p-3 fw-bold border-0 border-bottom-lg border-end border-lg-0 <?php echo $seccion == 'datos' ? 'bg-dark text-white' : 'text-muted'; ?>">Mis Datos</a>
                         <a href="perfil.php?seccion=pedidos" class="list-group-item list-group-item-action p-3 fw-bold border-0 border-bottom-lg border-end border-lg-0 <?php echo $seccion == 'pedidos' ? 'bg-dark text-white' : 'text-muted'; ?>">Mis Pedidos</a>
                         <a href="perfil.php?seccion=favoritos" class="list-group-item list-group-item-action p-3 fw-bold border-0 border-bottom-lg border-end border-lg-0 <?php echo $seccion == 'favoritos' ? 'bg-dark text-white' : 'text-muted'; ?>">Mis Favoritos</a>
-                        <a href="perfil.php?seccion=citas" class="list-group-item list-group-item-action p-3 fw-bold border-0 border-bottom-lg border-end border-lg-0 <?php echo $seccion == 'citas' ? 'bg-dark text-white' : 'text-muted'; ?>">Mis Citas</a>
-                        <a href="perfil.php?seccion=prendas" class="list-group-item list-group-item-action p-3 fw-bold border-0 border-bottom-lg border-end border-lg-0 <?php echo $seccion == 'prendas' ? 'bg-dark text-white' : 'text-muted'; ?>">Mi Armario</a>
                         <a href="controllers/usuarioController.php?accion=logout" class="list-group-item list-group-item-action p-3 text-danger fw-bold border-0 mt-lg-2 border-top-lg">
                             <i class="bi bi-box-arrow-right d-lg-none fs-5"></i>
                             <span class="d-none d-lg-inline">Cerrar Sesión</span>
@@ -37,7 +33,6 @@ include './includes/header.php';
                 </div>
             </div>
         </aside>
-
         <section class="col-lg-9">
             <?php if ($seccion == 'datos') { ?>
                 <?php if (isset($_GET['mensaje']) && $_GET['mensaje'] == 'perfil_actualizado'): ?>
@@ -67,7 +62,6 @@ include './includes/header.php';
                                 <input type="text" class="form-control rounded-0 border-dark" name="telefono" value="<?php echo htmlspecialchars($datosUsu['telefono'] ?? ''); ?>">
                             </div>
                         </div>
-
                         <h3 class="fw-bold text-uppercase mb-4 mt-3 border-top pt-4">Dirección de Envío</h3>
                         <div class="row">
                             <div class="col-md-12 mb-3">
@@ -97,11 +91,9 @@ include './includes/header.php';
                                 <input type="text" class="form-control rounded-0 border-dark" name="pais" value="<?php echo htmlspecialchars($datosUsu['pais'] ?? 'España'); ?>">
                             </div>
                         </div>
-
                         <button type="submit" class="btn btn-dark rounded-0 px-5 py-3 text-uppercase fw-bold ls-1 w-100">Guardar Cambios</button>
                     </form>
                 </div>
-
                 <div class="card border-0 shadow-sm rounded-0 p-4 bg-white mt-4">
                     <h4 class="fw-bold text-uppercase mb-4 border-bottom pb-2">
                         <i class="bi bi-shield-lock me-2"></i>Cambiar Contraseña
@@ -211,7 +203,7 @@ include './includes/header.php';
                                                             <?php echo $linea['producto_nombre']; ?>
                                                         </span>
                                                         <span class="d-block mt-1 text-muted" style="font-size: 0.75rem;">
-                                                            Talla: <?php echo $linea['talla'] ?? 'N/A'; ?> <span class="d-none d-sm-inline">| Color: <?php echo $linea['color_nombre'] ?? 'N/A'; ?></span>
+                                                            Talla: <?php echo $linea['talla'] ?? 'N/A'; ?> <span class="d-none d-sm-inline">| Equipación: <?php echo $linea['color_nombre'] ?? 'N/A'; ?></span>
                                                         </span>
                                                     </div>
                                                 </div>
@@ -229,7 +221,7 @@ include './includes/header.php';
                     <?php };  ?>
                 <?php };  ?>
             <?php } elseif ($seccion == 'favoritos') { ?>
-                <!-- BLOQUE DE FAVORITOS (Mantenido intacto) -->
+                <!-- BLOQUE DE FAVORITOS CON BOTONES NUEVOS -->
                 <h3 class="fw-bold text-uppercase mb-4">Mis Favoritos</h3>
                 <?php if (empty($listaFavoritos)) { ?>
                     <!-- Mensaje vacío Favoritos -->
@@ -248,62 +240,49 @@ include './includes/header.php';
                             <div class="col-6 col-md-4 col-lg-3 mb-4">
                                 <div class="card product-card border-0 bg-transparent h-100 position-relative d-flex flex-column">
                                     <a href="fichaProducto.php?idPrenda=<?= $prenda['id'] ?>&color=<?= $prenda['color_id'] ?>" class="text-decoration-none text-dark d-block flex-grow-1">
-                                        <div class="img-wrapper position-relative overflow-hidden">
-                                            <img src="<?= !empty($prenda['url_imagen']) ? $prenda['url_imagen'] : 'public/img/fondo.jpg' ?>" class="card-img-top rounded-0" alt="<?= $prenda['nombre'] ?>" style="height: 380px; object-fit: cover;">
+                                        <div class="img-wrapper position-relative overflow-hidden shadow-sm rounded-3">
+                                            <img src="<?= !empty($prenda['url_imagen']) ? $prenda['url_imagen'] : 'public/img/fondo.jpg' ?>" class="card-img-top rounded-3" alt="<?= $prenda['nombre'] ?>" style="height: 380px; object-fit: cover;">
+                                            
+                                            <!-- Overlay de Tallas Oculto (Necesario para el botón Añadir) -->
+                                            <div id="overlay-tallas-<?= $prenda['id'] ?>" class="overlay-tallas d-none position-absolute bottom-0 start-0 w-100 bg-white bg-opacity-75 p-3 text-center" style="z-index: 20;" onclick="event.preventDefault();">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="small fw-bold text-uppercase" style="letter-spacing: 1px;">Talla</span>
+                                                    <button type="button" class="btn-close" style="font-size: 0.7rem;" onclick="cerrarOverlayTallas(event, <?= $prenda['id'] ?>)"></button>
+                                                </div>
+                                                <div id="contenedor-botones-<?= $prenda['id'] ?>" class="d-flex justify-content-center flex-wrap gap-2">
+                                                </div>
+                                            </div>
+
                                         </div>
-                                        <div class="card-body text-center px-0 pb-1 mt-2">
-                                            <h5 class="card-title text-uppercase fw-bold fs-6 mb-1 text-truncate"><?= $prenda['nombre'] ?></h5>
-                                            <p class="card-text mb-2"><?= $prenda['precio'] ?> €</p>
+                                        <div class="card-body text-center px-0 pb-1 mt-3">
+                                            <h5 class="card-title text-uppercase fw-bold fs-6 mb-1 text-truncate" style="letter-spacing: 0.5px;"><?= $prenda['nombre'] ?></h5>
+                                            <p class="card-text mb-2 fw-bold text-dark"><?= number_format($prenda['precio'], 2) ?> €</p>
                                         </div>
                                     </a>
+                                    
+                                    <!-- BOTONES ESTANDARIZADOS REDONDOS -->
+                                    <div class="d-flex align-items-center justify-content-between gap-2 mt-2 px-1">
+                                        <button type="button" class="btn btn-outline-dark rounded-pill flex-grow-1 text-uppercase fw-bold"
+                                            style="height: 38px; font-size: 0.7rem; letter-spacing: 1px; transition: all 0.3s;"
+                                            onclick="abrirOverlayTallas(event, <?= $prenda['id'] ?>, <?= $prenda['color_id'] ?>)">
+                                            Añadir <i class="bi bi-plus-lg ms-1"></i>
+                                        </button>
+                                        
+                                        <!-- En favoritos, el corazón siempre sale marcado por defecto -->
+                                        <button type="button" class="btn btn-toggle-favorito btn-favorito-custom btn-favorito-std d-flex justify-content-center align-items-center rounded-circle m-0"
+                                            style="border-color: #000; width: 38px; height: 38px;"
+                                            data-id="<?= $prenda['id'] ?>"
+                                            data-color="<?= $prenda['color_id'] ?>">
+                                            <i class="bi bi-heart-fill text-danger"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         <?php }  ?>
                     </div>
                 <?php }  ?>
-            <?php } elseif ($seccion == 'citas') { ?>
-                <!-- BLOQUE DE CITAS (Mantenido intacto) -->
-                <h3 class="fw-bold text-uppercase mb-4">Mis Citas</h3>
-                <?php if (empty($listaCitas)) { ?>
-                    <div class="card border-0 shadow-sm rounded-0 p-5 text-center h-100 d-flex justify-content-center align-items-center bg-light">
-                        <div>
-                            <i class="bi bi-calendar-x text-muted display-1 mb-3 d-block"></i>
-                            <h4 class="fw-bold text-uppercase">No tienes citas programadas</h4>
-                            <p class="text-muted">Aún no has reservado ninguna visita a nuestro showroom exclusivo.</p>
-                            <a href="citas.php" class="btn btn-outline-dark rounded-0 px-5 py-2 text-uppercase fw-bold mt-3">Reserva ahora</a>
-                        </div>
-                    </div>
-                <?php } else { ?>
-                    <div class="row g-4">
-                        <?php foreach ($listaCitas as $cita) { ?>
-                            <div class="col-12 col-md-6">
-                                <div class="card border-dark border-1 rounded-0 h-100 bg-transparent">
-                                    <div class="card-header border-bottom border-dark border-1 bg-transparent p-3 d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold text-uppercase fs-6">
-                                            <i class="bi bi-calendar-event me-2"></i><?php echo date('d / m / Y', strtotime($cita['fecha_cita'])); ?>
-                                        </span>
-                                        <span class="fw-bold text-dark bg-light px-3 py-1 border border-dark border-1">
-                                            <?php echo date('H:i', strtotime($cita['fecha_cita'])); ?> h
-                                        </span>
-                                    </div>
-                                    <div class="card-body p-4">
-                                        <p class="mb-1 text-muted small text-uppercase fw-bold">Motivo de la visita</p>
-                                        <p class="mb-4 fw-bold fs-6"><?php echo $cita['motivo']; ?></p>
-                                        <div class="d-flex justify-content-between align-items-center border-top pt-3">
-                                            <p class="mb-0 text-muted small text-uppercase fw-bold">Estado</p>
-                                            <p class="mb-0 fw-bold fs-6 text-uppercase <?php echo ($cita['estado'] == 'pendiente') ? 'text-warning' : (($cita['estado'] == 'cancelada') ? 'text-danger' : 'text-success'); ?>">
-                                                <?php echo $cita['estado']; ?>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php }  ?>
-                    </div>
-                <?php } ?>
             <?php } ?>
         </section>
     </div>
 </main>
-
 <?php include './includes/footer.php'; ?>

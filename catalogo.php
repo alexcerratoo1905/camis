@@ -1,6 +1,6 @@
-<?php
-require_once 'controllers/catalogoController.php';
-include './includes/header.php';
+<?php 
+require_once 'controllers/catalogoController.php'; 
+include './includes/header.php'; 
 ?>
 <main class="container my-5 py-5 mt-5">
     <div class="row mb-5">
@@ -12,14 +12,13 @@ include './includes/header.php';
     </div>
     <div class="row">
         
-        <!-- Botón móvil Filtros -->
+        <!-- Botón Móvil Filtros -->
         <div class="col-12 d-lg-none mb-3">
             <button class="btn btn-outline-dark w-100 fw-bold text-uppercase rounded-0 py-3 d-flex justify-content-between align-items-center" type="button" data-bs-toggle="offcanvas" data-bs-target="#filtrosOffcanvas">
                 <span><i class="bi bi-sliders me-2"></i> Filtrar y Ordenar</span>
                 <i class="bi bi-chevron-right"></i>
             </button>
         </div>
-
         <aside class="col-lg-3 mb-4">
             <div class="offcanvas-lg offcanvas-start border-0 shadow-sm" tabindex="-1" id="filtrosOffcanvas" aria-labelledby="filtrosOffcanvasLabel">
                 
@@ -27,7 +26,6 @@ include './includes/header.php';
                     <h5 class="offcanvas-title fw-bold text-uppercase m-0" id="filtrosOffcanvasLabel" style="letter-spacing: 2px;">Filtros</h5>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas" data-bs-target="#filtrosOffcanvas" aria-label="Cerrar"></button>
                 </div>
-
                 <div class="offcanvas-body p-0 p-lg-0 flex-column bg-white">
                     <div class="sticky-top w-100" style="top: 100px; z-index: 1;">
                         
@@ -39,7 +37,6 @@ include './includes/header.php';
                                 <a href="catalogo.php?especial=herror" class="text-muted small text-decoration-underline fw-bold">Limpiar <span class="d-none d-lg-inline">todo</span></a>
                             <?php } ?>
                         </div>
-
                         <div class="accordion accordion-flush w-100" id="acordeonFiltros">
                             
                             <?php if (!$esModoSecreto) { ?>
@@ -47,8 +44,7 @@ include './includes/header.php';
                                     <i class="bi bi-tag-fill me-2"></i> Rebajas
                                 </a>
                             <?php } ?>
-
-                            <!-- 1. ORDENAR POR (Eliminadas las fechas) -->
+                            <!-- 1. ORDENAR POR -->
                             <div class="accordion-item bg-transparent border-bottom">
                                 <h2 class="accordion-header">
                                     <button class="accordion-button bg-transparent px-3 px-lg-0 fw-bold text-uppercase shadow-none" style="font-size: 0.9rem;" type="button" data-bs-toggle="collapse" data-bs-target="#filtroOrdenar">
@@ -67,9 +63,7 @@ include './includes/header.php';
                                 </div>
                             </div>
                             
-                            <!-- (GÉNERO FULMINADO DE AQUÍ) -->
-
-                            <!-- 2. CATEGORÍA (Renombrado de Colección) -->
+                            <!-- 2. CATEGORÍA -->
                             <?php if (!$esModoSecreto) { ?>
                                 <div class="accordion-item bg-transparent border-bottom">
                                     <h2 class="accordion-header">
@@ -88,8 +82,7 @@ include './includes/header.php';
                                     </div>
                                 </div>
                             <?php } ?>
-
-                            <!-- 3. TIPO DE PRENDA (Fijados: Camisetas, Entrenamiento, Chándal) -->
+                            <!-- 3. TIPO DE PRENDA -->
                             <div class="accordion-item bg-transparent border-bottom">
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed bg-transparent px-3 px-lg-0 fw-bold text-uppercase shadow-none" style="font-size: 0.9rem;" type="button" data-bs-toggle="collapse" data-bs-target="#filtroCategoria">
@@ -174,7 +167,6 @@ include './includes/header.php';
                 </div>
             </div>
         </aside>
-
         <!-- SECCIÓN DE PRODUCTOS -->
         <section class="col-lg-9">
             <div class="row g-4">
@@ -185,8 +177,8 @@ include './includes/header.php';
                         $fotoHover = count($listaImagenesColor) > 1 ? $listaImagenesColor[1]["url_imagen"] : $prenda["url_imagen"];
                 ?>
                         <div class="col-6 col-md-4">
-                            <div class="card product-card border-0 bg-transparent h-100 position-relative">
-                                <a href="fichaProducto.php?idPrenda=<?php echo $prenda["id"] ?>&color=<?php echo $prenda['color_id']; ?>">
+                            <div class="card product-card border-0 bg-transparent h-100 position-relative d-flex flex-column">
+                                <a href="fichaProducto.php?idPrenda=<?php echo $prenda["id"] ?>&color=<?php echo $prenda['color_id']; ?>" class="text-decoration-none text-dark d-block">
                                     <?php
                                     $tieneRebaja = isset($prenda['rebaja']) && $prenda['rebaja'] > 0;
                                     $precioFinal = $prenda['precio'];
@@ -194,12 +186,12 @@ include './includes/header.php';
                                         $precioFinal = $prenda['precio'] - ($prenda['precio'] * ($prenda['rebaja'] / 100));
                                     }
                                     ?>
-                                    <div class="img-wrapper position-relative">
-                                        <img src="<?php echo $prenda["url_imagen"]; ?>" class="card-img-top img-principal transicion-suave" alt="Prenda">
-                                        <img src="<?php echo $fotoHover; ?>" class="card-img-top img-hover transicion-suave position-absolute top-0 start-0 w-100 h-100" alt="Prenda Hover">
+                                    <div class="img-wrapper position-relative overflow-hidden shadow-sm rounded-3">
+                                        <img src="<?php echo $prenda["url_imagen"]; ?>" class="card-img-top img-principal transicion-suave rounded-3" alt="Prenda">
+                                        <img src="<?php echo $fotoHover; ?>" class="card-img-top img-hover transicion-suave position-absolute top-0 start-0 w-100 h-100 rounded-3" alt="Prenda Hover">
                                         
                                         <?php if ($tieneRebaja): ?>
-                                            <span class="position-absolute top-0 end-0 m-2 badge bg-danger text-white rounded-0 fw-bold px-2 py-1 shadow-sm" style="font-size: 0.8rem; letter-spacing: 1px; z-index: 10;">
+                                            <span class="position-absolute top-0 end-0 m-2 badge bg-dark text-white rounded-0 fw-bold px-2 py-1 shadow-sm" style="font-size: 0.75rem; letter-spacing: 1px; z-index: 10;">
                                                 -<?= $prenda['rebaja'] ?>%
                                             </span>
                                         <?php endif; ?>
@@ -212,32 +204,34 @@ include './includes/header.php';
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="card-body text-center px-0">
-                                        <h5 class="card-title text-uppercase fw-bold fs-6 mt-2 mb-1"><?php echo $prenda["nombre"] ?></h5>
+                                    <div class="card-body text-center px-0 pb-1 mt-3">
+                                        <h5 class="card-title text-uppercase fw-bold fs-6 mb-1 text-truncate" style="letter-spacing: 0.5px;"><?php echo $prenda["nombre"] ?></h5>
                                         <?php if ($tieneRebaja): ?>
-                                            <p class="card-text mb-2">
+                                            <p class="card-text mb-0">
                                                 <del class="text-muted small me-2"><?= number_format($prenda['precio'], 2) ?> €</del>
-                                                <span class="text-danger fw-bold fs-5"><?= number_format($precioFinal, 2) ?> €</span>
+                                                <span class="text-dark fw-bold fs-6"><?= number_format($precioFinal, 2) ?> €</span>
                                             </p>
                                         <?php else: ?>
-                                            <p class="card-text"><?php echo number_format($prenda["precio"], 2) ?> €</p>
+                                            <p class="card-text mb-0 fw-bold text-dark"><?php echo number_format($prenda["precio"], 2) ?> €</p>
                                         <?php endif; ?>
                                     </div>
                                 </a>
-                                <div class="d-flex align-items-center justify-content-between gap-2 mt-auto px-1 pt-2">
-                                    <button type="button" class="btn btn-principal rounded-0 flex-grow-1 text-uppercase fw-bold"
-                                        style="height: 40px; font-size: 0.75rem; letter-spacing: 1px;"
+                                <!-- BOTONES ESTANDARIZADOS REDONDOS -->
+                                <div class="d-flex align-items-center justify-content-between gap-2 mt-2 px-1">
+                                    <button type="button" class="btn btn-outline-dark rounded-pill flex-grow-1 text-uppercase fw-bold"
+                                        style="height: 38px; font-size: 0.7rem; letter-spacing: 1px; transition: all 0.3s;"
                                         onclick="abrirOverlayTallas(event, <?= $prenda['id'] ?>, <?= $prenda['color_id'] ?>)">
-                                        Añadir
+                                        Añadir <i class="bi bi-plus-lg ms-1"></i>
                                     </button>
                                     
                                     <?php
                                     $iconoCorazon = 'bi-heart';
                                     if (isset($arrayFavoritos) && in_array($prenda['id'] . '-' . $prenda['color_id'], $arrayFavoritos)) {
-                                        $iconoCorazon = 'bi-heart-fill';
+                                        $iconoCorazon = 'bi-heart-fill text-danger';
                                     }
                                     ?>
-                                    <button type="button" class="btn btn-toggle-favorito btn-favorito-custom transicion-suave btn-favorito-std d-flex justify-content-center align-items-center rounded-0 m-0"
+                                    <button type="button" class="btn btn-toggle-favorito btn-favorito-custom btn-favorito-std d-flex justify-content-center align-items-center rounded-circle m-0"
+                                        style="border-color: #000; width: 38px; height: 38px;"
                                         data-id="<?= $prenda['id'] ?>"
                                         data-color="<?= $prenda['color_id'] ?>">
                                         <i class="bi <?= $iconoCorazon ?>"></i>
@@ -252,7 +246,6 @@ include './includes/header.php';
                 }
                 ?>
             </div>
-
             <?php if ($totalPaginas > 1): ?>
                 <div class="row mt-5 pt-3 border-top">
                     <div class="col-12 d-flex justify-content-center">
@@ -289,7 +282,7 @@ include './includes/header.php';
     </div>
 </main>
 <script src="public/js/catalogo.js"></script>
-<?php
+<?php 
 include './includes/prendasRecientes.php';
-include './includes/footer.php';
+include './includes/footer.php'; 
 ?>

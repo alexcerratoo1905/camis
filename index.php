@@ -33,8 +33,7 @@ include './includes/header.php';
 <!-- HERO SECTION: Portada inicial -->
 <section class="hero-section">
     <div class="container position-relative z-2">
-        <h1 class="hero-title animate__animated animate__fadeInDown">HERROR</h1>
-        <p class="hero-subtitle animate__animated animate__fadeInUp animate__delay-1s">REDEFINIENDO EL JUEGO</p>
+        <h1 class="hero-title animate__animated animate__fadeInDown">DJALEXITO</h1>
         
         <a href="#bento-explorar" class="btn-scroll-down animate__animated animate__fadeIn animate__delay-2s mt-5 d-inline-block">
             <span class="d-block small text-uppercase fw-bold mb-2 text-muted" style="letter-spacing: 2px;">Descubre</span>
@@ -46,42 +45,48 @@ include './includes/header.php';
 <!-- SECCIÓN BENTO GRID: Explorar Categorías -->
 <section id="bento-explorar" class="container my-5 py-5 position-relative z-2">
     <div class="row g-4 bento-grid">
+        
         <!-- Tarjeta Principal Ligas -->
         <div class="col-md-8">
             <a href="catalogo.php" class="bento-item bg-dark text-white d-flex align-items-end p-4 p-md-5 text-decoration-none shadow-lg h-100 position-relative overflow-hidden">
-                <div class="bento-bg" style="background-image: url('public/img/fondo.jpg');"></div>
+                <!-- Imagen de fondo rotada, difuminada y escalada -->
+                <div class="bento-bg" style="background-image: url('public/img/shirt-3d.png'); filter: brightness(0.5); transform: scale(1.2) rotate(4deg);"></div>
+                
                 <div class="bento-content position-relative z-2 w-100">
                     <span class="badge bg-white text-dark mb-3 px-3 py-2 fw-bold" style="letter-spacing: 1px;">NUEVA TEMPORADA</span>
-                    <h2 class="display-5 fw-bold text-uppercase mb-2">Equipaciones 26/27</h2>
+                    <h2 class="display-5 fw-bold text-uppercase mb-2 text-white">Equipaciones 26/27</h2>
                     <p class="fs-5 mb-0 text-white-50">Explora las últimas armaduras de La Liga y la Premier.</p>
                 </div>
             </a>
         </div>
         
-        <!-- Tarjeta Ediciones Especiales -->
+        <!-- Tarjeta Ediciones Especiales (Fondo Blanco) -->
         <div class="col-md-4">
-            <a href="catalogo.php?tipo=1" class="bento-item bg-light text-dark d-flex align-items-start flex-column p-4 text-decoration-none shadow-lg h-100 position-relative overflow-hidden border border-secondary border-opacity-25">
-                <div class="bento-icon mb-auto">
-                    <i class="bi bi-star-fill display-4 text-warning"></i>
-                </div>
-                <div class="bento-content position-relative z-2 w-100 mt-4">
-                    <h3 class="fw-bold text-uppercase mb-2">Ediciones Especiales</h3>
-                    <p class="small text-muted mb-0">Camisetas exclusivas y colaboraciones únicas de edición limitada.</p>
+            <a href="catalogo.php?tipo=1" class="bento-item bg-light text-dark d-flex align-items-end p-4 text-decoration-none shadow-lg h-100 position-relative overflow-hidden border border-secondary border-opacity-25">
+                <!-- Imagen de fondo rotada y difuminada (con baja opacidad para que se vea blanco) -->
+                <div class="bento-bg" style="background-image: url('public/img/shirt-3d.png'); transform: scale(1.4) rotate(-12deg); opacity: 0.3;"></div>
+                
+                <div class="bento-content position-relative z-2 w-100">
+                    <h3 class="fw-bold text-uppercase mb-2 text-dark">Ediciones Especiales</h3>
+                    <p class="small text-muted mb-0 fw-bold">Camisetas exclusivas y colaboraciones únicas de edición limitada.</p>
                 </div>
             </a>
         </div>
         
-        <!-- Tarjeta Retro -->
+        <!-- Tarjeta Retro (Fondo Amarillo) -->
         <div class="col-md-4">
             <a href="catalogo.php?coleccion=6" class="bento-item bg-warning text-dark d-flex align-items-end p-4 text-decoration-none shadow-lg h-100 position-relative overflow-hidden">
+                <!-- Imagen de fondo rotada y difuminada (con baja opacidad para que el amarillo brille) -->
+                <div class="bento-bg" style="background-image: url('public/img/shirt-3d.png'); transform: scale(1.3) rotate(8deg); opacity: 0.35;"></div>
+                
                 <div class="bento-content position-relative z-2 w-100">
-                    <h3 class="fw-bold text-uppercase mb-1">Retro Series</h3>
+                    <h3 class="fw-bold text-uppercase mb-1 text-dark">Retro Series</h3>
                     <p class="small text-dark mb-0 fw-bold">Clásicos que nunca mueren.</p>
                 </div>
             </a>
         </div>
         
-        <!-- Tarjeta Galería de Muestra (Sustituye a Woman Collection) -->
+        <!-- Tarjeta Galería de Muestra -->
         <div class="col-md-8">
             <div class="bento-item bg-dark text-white p-4 p-md-5 shadow-lg h-100 position-relative overflow-hidden d-flex flex-column justify-content-center">
                 <div class="position-relative z-2 w-100 text-center mb-4">
@@ -89,10 +94,10 @@ include './includes/header.php';
                     <p class="text-white-50 mb-0">Calidad premium en cada detalle.</p>
                 </div>
                 <div class="d-flex justify-content-center align-items-center gap-3 position-relative z-2 bento-gallery">
-                    <!-- IMPORTANTE: CAMBIA ESTAS RUTAS POR TUS FOTOS DE EJEMPLO -->
-                    <img src="public/img/ejemplo1.jpg" onerror="this.src='public/img/fondo.jpg';" class="rounded-3 shadow-lg bento-gallery-img" alt="Ejemplo 1">
-                    <img src="public/img/ejemplo2.jpg" onerror="this.src='public/img/fondo.jpg';" class="rounded-3 shadow-lg bento-gallery-img mt-4" alt="Ejemplo 2">
-                    <img src="public/img/ejemplo3.jpg" onerror="this.src='public/img/fondo.jpg';" class="rounded-3 shadow-lg bento-gallery-img" alt="Ejemplo 3">
+                    <!-- FOTOS DE EJEMPLO -->
+                    <img src="public/img/ejemplo1.jpg" onerror="this.onerror=null; this.src='public/img/shirt-3d.png';" class="rounded-3 shadow-lg bento-gallery-img" alt="Ejemplo 1">
+                    <img src="public/img/ejemplo2.jpg" onerror="this.onerror=null; this.src='public/img/shirt-3d.png';" class="rounded-3 shadow-lg bento-gallery-img mt-4" alt="Ejemplo 2">
+                    <img src="public/img/ejemplo3.jpg" onerror="this.onerror=null; this.src='public/img/shirt-3d.png';" class="rounded-3 shadow-lg bento-gallery-img" alt="Ejemplo 3">
                 </div>
             </div>
         </div>
@@ -214,7 +219,6 @@ include './includes/header.php';
 <!-- SECCIÓN: CARRUSEL RECIENTES (Cristal) -->
 <section class="position-relative z-2 mb-5 pb-5">
     <div class="container glass-panel p-4 p-md-5">
-        <h3 class="fw-bold text-uppercase mb-5 display-6 text-center" style="letter-spacing: 2px;">Últimas Entradas</h3>
         <?php include './includes/prendasRecientes.php'; ?>
     </div>
 </section>
